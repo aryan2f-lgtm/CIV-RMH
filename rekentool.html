@@ -3593,7 +3593,18 @@ function resetLCA(){
   window.initGate=function(){
     var lvl=gc('mki_access');
     var storedUser=gc('mki_user');
+    // Member/admin vereisen ALTIJD een actieve sessie (sessionStorage).
+    // Zonder die vlag (= browser gesloten geweest) worden oude cookies genegeerd.
     if(lvl==='admin'||lvl==='member'){
+      var sessOk=false;
+      try{sessOk=sessionStorage.getItem('mki_session')==='1';}catch(e){}
+      if(!sessOk){
+        // Oude/verlopen sessie — wis cookies en toon gate
+        ['mki_access','mki_naam','mki_user'].forEach(function(n){
+          document.cookie=n+'=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/';
+        });
+        showEl('email-gate',true);return;
+      }
       if(storedUser){
         var users=_decUsers();
         _CU=null;
@@ -3646,7 +3657,8 @@ function resetLCA(){
     }
     // Succes
     _CU=user;
-    scs('mki_access',user.r);scs('mki_naam',user.n);scs('mki_user',username); // sessie-cookies: vervallen bij sluiten browser
+    scs('mki_access',user.r);scs('mki_naam',user.n);scs('mki_user',username);
+    try{sessionStorage.setItem('mki_session','1');sessionStorage.setItem('mki_sess_role',user.r);}catch(e){}
     hideEl('email-gate');hideEl('upgrade-overlay');
     if(user.r==='admin'){applyAdmin();}else{applyMember();}
     setTimeout(function(){alert('Welkom '+user.n.split(' ')[0]+'!\n'+(user.r==='admin'?'U bent ingelogd als beheerder.':'U heeft nu volledige toegang.'));},150);
@@ -3673,6 +3685,7 @@ function resetLCA(){
     ['mki_access','mki_naam','mki_user','mki_lid_pending'].forEach(function(n){
       document.cookie=n+'=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/';
     });
+    try{sessionStorage.removeItem('mki_session');sessionStorage.removeItem('mki_sess_role');}catch(e){}
     _A='none';_CU=null;location.reload();
   };
 
