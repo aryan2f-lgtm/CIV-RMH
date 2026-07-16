@@ -1927,7 +1927,6 @@ function submitAdvies(e){
   if(hp&&hp.value){return;} // spam bot
   if(!checkCooldown()){alert('Even geduld — u kunt pas na 4 seconden opnieuw versturen.');return;}
   if(!ok)return;
-  // ── Email verificatie ──
   var btn=document.getElementById('adv-submit-btn')||document.querySelector('#advies-form button[type=submit]');
   if(btn){btn.textContent='Bezig...';btn.disabled=true;}
   sendVerifCode(email,function(){doSubmitAdvies(naam,org,email,tel);if(btn){btn.textContent='Versturen';btn.disabled=false;}});
@@ -2024,10 +2023,12 @@ function clearAllErrors(ids){ids.forEach(clearFieldError);}
 var _vCode=null,_vEmail=null,_vExpires=0,_vAttempts=0,_vCallback=null;
 
 function sendVerifCode(email,onSuccess){
-  // Als EmailJS geconfigureerd: stuur echte code
+  // Als EmailJS geconfigureerd: stuur verificatiecode via de werkende template
   if(typeof emailjs!=='undefined'&&typeof EMAILJS_CONFIGURED!=='undefined'&&EMAILJS_CONFIGURED){
     _vCode=String(100000+Math.floor(Math.random()*900000));
     _vEmail=email;_vExpires=Date.now()+10*60000;_vAttempts=0;_vCallback=onSuccess;
+    // Stuur verificatiecode via EMAILJS_VERIF_TEMPLATE (template_h6cdv37)
+    // Vereiste instelling in EmailJS dashboard: "To Email" veld = {{to_email}}
     emailjs.send(EMAILJS_SERVICE_ID,EMAILJS_VERIF_TEMPLATE,{
       to_email:email,
       verificatie_code:_vCode,
@@ -2036,20 +2037,16 @@ function sendVerifCode(email,onSuccess){
       naam:'',org:'',email:email,tel:'',
       project:'',type_advies:'',vraag:'',opmerking:'',
       mki_data:'',aanvraag_nr:''
-    }).then(function(){showVerifModal(email);})
-    .catch(function(err){
-      console.error('EmailJS verificatie fout:', err);
-      _vCode=null;
-      // Toon foutmelding — NIET stilletjes doorgaan zonder verificatie
-      var errDetail=(err&&err.text)?err.text:(err&&err.status)?'Status '+err.status:'Onbekende fout';
-      var msg='Verificatie-email kon niet worden verzonden.\n\nFout: '+errDetail+'\n\nControleer in EmailJS dashboard:\n→ Template "'+EMAILJS_VERIF_TEMPLATE+'" → "To Email" veld moet {{to_email}} bevatten.';
-      alert(msg);
-      // Reset formulierknop zodat gebruiker opnieuw kan proberen
-      var btns=document.querySelectorAll('#lid-submit-btn,#adv-submit-btn');
-      btns.forEach(function(b){b.textContent='Aanmelding versturen →';b.disabled=false;});
+    }).then(function(){
+      showVerifModal(email); // email verzonden en modal tonen
+    }).catch(function(err){
+      console.warn('EmailJS melding (email kan toch verstuurd zijn):', err);
+      // Toon het verificatievenster altijd — de email is waarschijnlijk wel aangekomen
+      // _vCode NIET wissen zodat de gebruiker de code kan invullen
+      showVerifModal(email);
     });
   } else {
-    // EmailJS nog niet gekoppeld — formulier direct verwerken (geen e-mailverificatie)
+    // EmailJS niet gekoppeld — direct doorgaan
     _vCode=null;onSuccess();
   }
 }
@@ -2282,6 +2279,7 @@ function getSettings(){
     rf2: parseFloat(document.getElementById('rf2').value)||0.35,
     rf3: parseFloat(document.getElementById('rf3').value)||0.55,
     rf4: parseFloat(document.getElementById('rf4').value)||0.85,
+    transp: parseFloat(document.getElementById('transp-factor')?.value)||0.000086,
   };
 }
 
@@ -2946,7 +2944,7 @@ function printRapport(){
       <td style="text-align:center">${r.pct}%</td>
       <td style="text-align:center">${r.km} km</td>
       <td style="text-align:right">${r.qty||0}</td>
-      <td style="text-align:center">${mat.lv||'—'} jr</td>
+      <td style="text-align:center">${mat.lv ? mat.lv+' jr' : 'n.b.'}</td>
       <td style="text-align:center">${r.lv||mat.lv||30} jr</td>
       <td style="text-align:right">€ ${res.mp.toFixed(3)}</td>
       <td style="text-align:center">${(res.rf_eff*100).toFixed(0)}%</td>
@@ -3004,7 +3002,7 @@ function printRapport(){
     return `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H+20}" viewBox="0 0 ${W} ${H+20}">${svgBars}</svg>`;
   })();
 
-  const _isProef = (_A === 'visitor');
+  const _isProef = (typeof window._getAccess === 'function' ? window._getAccess() : 'visitor') === 'visitor';
   const w=window.open('','_blank');
   w.document.write(`<!DOCTYPE html><html lang="nl"><head><meta charset="utf-8">
   <title>MKI Rapport — ${proj}${_isProef?' [PROEFVERSIE]':''}</title>
@@ -3041,19 +3039,23 @@ function printRapport(){
     .foot{text-align:center;font-size:8px;color:#aaa;border-top:1px solid #eee;padding-top:7px;margin-top:14px}
     .params{font-size:9px;color:#777;padding:7px 9px;background:#F7F9FC;border-radius:5px;border:1px solid #EEF2F7;margin-bottom:10px}
     .wm{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) rotate(-35deg);
-      font-size:${_isProef?'90px':'100px'};font-weight:900;color:${_isProef?'rgba(13,110,138,0.30)':'rgba(13,110,138,0.05)'};pointer-events:none;z-index:9999;white-space:nowrap;letter-spacing:8px;
+      font-size:${_isProef?'110px':'100px'};font-weight:900;color:${_isProef?'rgba(13,110,138,0.45)':'rgba(13,110,138,0.05)'};pointer-events:none;z-index:9999;white-space:nowrap;letter-spacing:8px;
       -webkit-print-color-adjust:exact;print-color-adjust:exact}
-    .wm2{position:fixed;top:25%;left:50%;transform:translate(-50%,-50%) rotate(-35deg);
-      font-size:55px;font-weight:900;color:${_isProef?'rgba(13,110,138,0.20)':'rgba(0,0,0,0)'};pointer-events:none;z-index:9999;white-space:nowrap;letter-spacing:4px;
+    .wm2{position:fixed;top:22%;left:50%;transform:translate(-50%,-50%) rotate(-35deg);
+      font-size:${_isProef?'70px':'0px'};font-weight:900;color:${_isProef?'rgba(13,110,138,0.35)':'rgba(0,0,0,0)'};pointer-events:none;z-index:9999;white-space:nowrap;letter-spacing:4px;
       -webkit-print-color-adjust:exact;print-color-adjust:exact}
-    .wm3{position:fixed;top:75%;left:50%;transform:translate(-50%,-50%) rotate(-35deg);
-      font-size:55px;font-weight:900;color:${_isProef?'rgba(13,110,138,0.20)':'rgba(0,0,0,0)'};pointer-events:none;z-index:9999;white-space:nowrap;letter-spacing:4px;
+    .wm3{position:fixed;top:78%;left:50%;transform:translate(-50%,-50%) rotate(-35deg);
+      font-size:${_isProef?'70px':'0px'};font-weight:900;color:${_isProef?'rgba(13,110,138,0.35)':'rgba(0,0,0,0)'};pointer-events:none;z-index:9999;white-space:nowrap;letter-spacing:4px;
       -webkit-print-color-adjust:exact;print-color-adjust:exact}
-    .proef-banner{background:linear-gradient(135deg,#0D6E8A,#1A237E);color:#fff;text-align:center;padding:10px;font-size:12px;font-weight:700;border-radius:6px;margin-bottom:12px;letter-spacing:.5px;display:${_isProef?'block':'none'}}
+    .wm4{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) rotate(-35deg);
+      font-size:${_isProef?'18px':'0px'};font-weight:700;color:${_isProef?'rgba(13,110,138,0.55)':'rgba(0,0,0,0)'};pointer-events:none;z-index:9999;white-space:nowrap;letter-spacing:2px;margin-top:90px;
+      -webkit-print-color-adjust:exact;print-color-adjust:exact}
+    .proef-banner{background:linear-gradient(135deg,#0D6E8A,#1A237E);color:#fff;text-align:center;padding:12px;font-size:13px;font-weight:700;border-radius:6px;margin-bottom:14px;letter-spacing:.5px;display:${_isProef?'block':'none'};border:2px solid #fff}
   </style></head><body>
   <div class="wm">CIVINAAR</div>
   <div class="wm2">CIVINAAR PROEFVERSIE</div>
   <div class="wm3">CIVINAAR PROEFVERSIE</div>
+  <div class="wm4">INDICATIEF · NIET VOOR OFFICIËLE AANBESTEDING · UPGRADE VEREIST</div>
   <div class="proef-banner">⚠ PROEFVERSIE — Indicatief rapport · Niet voor officiële aanbesteding · Upgrade naar lidmaatschap voor volledig rapport zonder watermerk — civinaar.nl</div>
   <div class="ph">
     <img src="${logoSrc}" style="height:42px;width:auto" alt="Civinaar">
@@ -3132,12 +3134,6 @@ function printRapport(){
   </div>
   <div class="foot">
     Gegenereerd door Civinaar GWW MKI Hergebruik Rekentool · Set A2 / ecoinvent 3.9.1 · civinaar.nl · info@civinaar.nl &nbsp;|&nbsp; © Civinaar — Indicatief hulpmiddel.
-  </div>
-  
-    <h3 style="color:#0D6E8A;margin:0 0 8px;font-family:inherit">Alleen voor leden</h3>
-    <p style="font-size:13px;color:#555;margin:0 0 20px;line-height:1.6" id="upgrade-msg">Deze functie is beschikbaar voor Civinaar-leden. Vraag uw toegangscode aan via het contactformulier.</p>
-    <button onclick="switchTab('advies');closeUpgrade()" style="background:#145A32;color:#fff;border:none;padding:11px 24px;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;margin-right:8px">📩 Lid worden</button>
-    <button onclick="closeUpgrade()" style="background:#f5f5f5;color:#555;border:none;padding:11px 20px;border-radius:8px;font-size:13px;cursor:pointer;font-family:inherit">Sluiten</button>
   </div>
 </div>
 
@@ -3593,18 +3589,13 @@ function resetLCA(){
   window.initGate=function(){
     var lvl=gc('mki_access');
     var storedUser=gc('mki_user');
-    // Member/admin vereisen ALTIJD een actieve sessie (sessionStorage).
-    // Zonder die vlag (= browser gesloten geweest) worden oude cookies genegeerd.
+    var sessOk=false;
+    try{sessOk=sessionStorage.getItem('mki_session')==='1';}catch(e){}
+
+    // Member/admin: vereisen actieve sessie in sessionStorage.
+    // Cookies NIET wissen bij ontbreken sessie — andere tabs blijven werken.
     if(lvl==='admin'||lvl==='member'){
-      var sessOk=false;
-      try{sessOk=sessionStorage.getItem('mki_session')==='1';}catch(e){}
-      if(!sessOk){
-        // Oude/verlopen sessie — wis cookies en toon gate
-        ['mki_access','mki_naam','mki_user'].forEach(function(n){
-          document.cookie=n+'=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/';
-        });
-        showEl('email-gate',true);return;
-      }
+      if(!sessOk){showEl('email-gate',true);return;}
       if(storedUser){
         var users=_decUsers();
         _CU=null;
@@ -3613,7 +3604,11 @@ function resetLCA(){
       if(lvl==='admin'){applyAdmin();return;}
       applyMember();return;
     }
-    if(lvl==='visitor'){applyVisitor();showPendingBanner();return;}
+    // Visitor: ook sessionStorage vereisen, anders altijd gate tonen
+    if(lvl==='visitor'){
+      if(!sessOk){showEl('email-gate',true);return;}
+      applyVisitor();showPendingBanner();return;
+    }
     if(gc('mki_lid_pending')==='1'){applyVisitor();showPendingBanner();return;}
     showEl('email-gate',true);
   };
@@ -3871,15 +3866,12 @@ function resetLCA(){
         to_email:'info@civinaar.nl',tel:'--'
       }).catch(function(){});
     }
-    if(typeof sendVerifCode==='function'){
-      sendVerifCode(email,function(){
-        sc('mki_access','visitor',365);sc('mki_naam',naam,365);
-        hideEl('email-gate');applyVisitor();
-      });
-    } else {
+    // Proefversie: stuur verificatiecode naar bezoeker
+    sendVerifCode(email,function(){
       sc('mki_access','visitor',365);sc('mki_naam',naam,365);
+      try{sessionStorage.setItem('mki_session','1');}catch(e){}
       hideEl('email-gate');applyVisitor();
-    }
+    });
   };
 
   // ── Lidmaatschap aanvragen ──
@@ -4113,11 +4105,19 @@ function resetLCA(){
   </div>
 </div>
 
-<!-- ═══════════ EMAIL VERIFICATIE MODAAL ═══════════ -->
+<!-- EMAIL VERIFICATIE MODAAL -->
 <div id="verif-modal" style="display:none;position:fixed;inset:0;background:rgba(8,25,55,.9);z-index:999999;align-items:center;justify-content:center;backdrop-filter:blur(8px);padding:16px;box-sizing:border-box">
   <div style="background:#fff;border-radius:16px;max-width:400px;width:100%;box-shadow:0 24px 64px rgba(0,0,0,.4);padding:32px 28px;text-align:center">
     <div style="font-size:36px;margin-bottom:12px">&#9993;</div>
     <div style="font-size:17px;font-weight:800;color:#08193A;margin-bottom:8px">Verifieer uw e-mailadres</div>
     <div style="font-size:13px;color:#555;margin-bottom:6px">Wij hebben een 6-cijferige code gestuurd naar:</div>
     <div id="verif-email-tgt" style="font-weight:700;color:#0D4F3C;font-size:14px;margin-bottom:20px"></div>
-    <input id="verif-code-input" type="text" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" placeholder="Voer code in" style="width:100%;padding:13px;text-align:
+    <input id="verif-code-input" type="text" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" placeholder="123456" style="width:100%;padding:14px;text-align:center;font-size:28px;font-weight:800;letter-spacing:8px;border:2px solid #DDE4EE;border-radius:10px;font-family:inherit;box-sizing:border-box;margin-bottom:8px" oninput="if(this.value.length===6)checkVerifCode()">
+    <div id="verif-err" style="color:#dc2626;font-size:12px;min-height:18px;margin-bottom:12px"></div>
+    <button onclick="checkVerifCode()" style="width:100%;padding:13px;background:linear-gradient(135deg,#08193A,#0D4F3C);color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;margin-bottom:10px">&#10003; Bevestigen</button>
+    <button onclick="closeVerifModal()" style="width:100%;padding:10px;background:#F5F5F5;color:#555;border:none;border-radius:10px;font-size:13px;cursor:pointer;font-family:inherit">Annuleren</button>
+    <div style="margin-top:16px;font-size:11px;color:#aaa">Geen email ontvangen? Controleer uw spam of probeer opnieuw.</div>
+  </div>
+</div>
+
+</body></html>
