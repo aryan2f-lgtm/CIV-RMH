@@ -3004,9 +3004,10 @@ function printRapport(){
     return `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H+20}" viewBox="0 0 ${W} ${H+20}">${svgBars}</svg>`;
   })();
 
+  const _isProef = (_A === 'visitor');
   const w=window.open('','_blank');
   w.document.write(`<!DOCTYPE html><html lang="nl"><head><meta charset="utf-8">
-  <title>MKI Rapport — ${proj}</title>
+  <title>MKI Rapport — ${proj}${_isProef?' [PROEFVERSIE]':''}</title>
   <style>
     *{box-sizing:border-box;margin:0;padding:0}
     body{font-family:Arial,sans-serif;font-size:11px;color:#222;background:#fff;padding:16px}
@@ -3040,14 +3041,24 @@ function printRapport(){
     .foot{text-align:center;font-size:8px;color:#aaa;border-top:1px solid #eee;padding-top:7px;margin-top:14px}
     .params{font-size:9px;color:#777;padding:7px 9px;background:#F7F9FC;border-radius:5px;border:1px solid #EEF2F7;margin-bottom:10px}
     .wm{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) rotate(-35deg);
-      font-size:100px;font-weight:900;color:rgba(13,110,138,0.05);pointer-events:none;z-index:0;white-space:nowrap;letter-spacing:8px;
+      font-size:${_isProef?'90px':'100px'};font-weight:900;color:${_isProef?'rgba(13,110,138,0.30)':'rgba(13,110,138,0.05)'};pointer-events:none;z-index:9999;white-space:nowrap;letter-spacing:8px;
       -webkit-print-color-adjust:exact;print-color-adjust:exact}
+    .wm2{position:fixed;top:25%;left:50%;transform:translate(-50%,-50%) rotate(-35deg);
+      font-size:55px;font-weight:900;color:${_isProef?'rgba(13,110,138,0.20)':'rgba(0,0,0,0)'};pointer-events:none;z-index:9999;white-space:nowrap;letter-spacing:4px;
+      -webkit-print-color-adjust:exact;print-color-adjust:exact}
+    .wm3{position:fixed;top:75%;left:50%;transform:translate(-50%,-50%) rotate(-35deg);
+      font-size:55px;font-weight:900;color:${_isProef?'rgba(13,110,138,0.20)':'rgba(0,0,0,0)'};pointer-events:none;z-index:9999;white-space:nowrap;letter-spacing:4px;
+      -webkit-print-color-adjust:exact;print-color-adjust:exact}
+    .proef-banner{background:linear-gradient(135deg,#0D6E8A,#1A237E);color:#fff;text-align:center;padding:10px;font-size:12px;font-weight:700;border-radius:6px;margin-bottom:12px;letter-spacing:.5px;display:${_isProef?'block':'none'}}
   </style></head><body>
   <div class="wm">CIVINAAR</div>
+  <div class="wm2">CIVINAAR PROEFVERSIE</div>
+  <div class="wm3">CIVINAAR PROEFVERSIE</div>
+  <div class="proef-banner">⚠ PROEFVERSIE — Indicatief rapport · Niet voor officiële aanbesteding · Upgrade naar lidmaatschap voor volledig rapport zonder watermerk — civinaar.nl</div>
   <div class="ph">
     <img src="${logoSrc}" style="height:42px;width:auto" alt="Civinaar">
     <div class="ph-mid">
-      <h1>MKI Hergebruik Rekentool — Projectrapport</h1>
+      <h1>MKI Hergebruik Rekentool — ${_isProef?'Proefversie Rapport':'Projectrapport'}</h1>
       <p>NMD Set A2 · ecoinvent 3.9.1 · Moederbestek · CE Delft · PCR Asfalt 2026</p>
     </div>
     <div class="ph-right">
@@ -3526,11 +3537,12 @@ function resetLCA(){
     try{localStorage.setItem('mki_users_db',JSON.stringify(users));}catch(e){}
   }
 
-  var _MAX=4; // max rijen voor bezoekers
+  var _MAX=6; // max rijen voor bezoekers (proefversie)
 
   // ── Cookie helpers ──
   function gc(n){var m=document.cookie.match('(^|;)\s*'+n+'=([^;]*)');return m?decodeURIComponent(m[2]):null;}
   function sc(n,v,d){var e=new Date();e.setTime(e.getTime()+d*864e5);document.cookie=n+'='+encodeURIComponent(v)+';expires='+e.toUTCString()+';path=/';}
+  function scs(n,v){document.cookie=n+'='+encodeURIComponent(v)+';path=/';} // sessie-cookie (vervalt bij sluiten browser)
   function delCookie(n){document.cookie=n+'=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/';}
 
   // ── DOM helpers ──
@@ -3543,9 +3555,11 @@ function resetLCA(){
     var naam=gc('mki_naam');
     var hn=document.getElementById('hdr-gebruiker');
     if(hn){hn.textContent=naam?'Welkom, '+naam.split(' ')[0]:'Proefversie';hn.style.pointerEvents='none';}
-    ['btn-excel','btn-print','btn-dubocalc'].forEach(function(id){
+    ['btn-excel','btn-dubocalc'].forEach(function(id){
       var el=document.getElementById(id);if(el){el.style.opacity='0.55';el.title='Alleen voor leden';}
     });
+    // PDF mag wel voor proefversie, maar met watermerk
+    var pb=document.getElementById('btn-print');if(pb){pb.style.opacity='1';pb.title='PDF met Civinaar-watermerk (proefversie)';}
   }
 
   function applyMember(){
@@ -3632,7 +3646,7 @@ function resetLCA(){
     }
     // Succes
     _CU=user;
-    sc('mki_access',user.r,365);sc('mki_naam',user.n,365);sc('mki_user',username,365);
+    scs('mki_access',user.r);scs('mki_naam',user.n);scs('mki_user',username); // sessie-cookies: vervallen bij sluiten browser
     hideEl('email-gate');hideEl('upgrade-overlay');
     if(user.r==='admin'){applyAdmin();}else{applyMember();}
     setTimeout(function(){alert('Welkom '+user.n.split(' ')[0]+'!\n'+(user.r==='admin'?'U bent ingelogd als beheerder.':'U heeft nu volledige toegang.'));},150);
@@ -3791,9 +3805,10 @@ function resetLCA(){
   // ── Toegangsbeheer ──
   window.requireMember=function(feature){
     if(_A==='member'||_A==='admin')return true;
+    // PDF is toegestaan voor bezoekers (proefversie) — met zwaar watermerk
+    if(feature==='print')return true;
     var msgs={
       export:'Excel-export is exclusief voor Civinaar-leden. Word lid voor de volledige berekening als bestand.',
-      print:'PDF-rapport genereren is voor leden. Vraag een toegangscode aan via het adviesformulier.',
       dubocalc:'DuboCalc CSV-export is voor leden &#8212; direct bruikbaar in uw aanbestedingsdossier.'
     };
     var el=document.getElementById('upgrade-msg');
@@ -3933,6 +3948,26 @@ function resetLCA(){
 </script>
 
 
+
+<!-- ═══════════ MATERIAAL MODAL ═══════════ -->
+<div id="mat-modal-overlay" onclick="if(event.target===this)closeMaterialModal()">
+  <div id="mat-modal">
+    <div id="mat-modal-top">
+      <input id="mat-modal-search" type="text" placeholder="🔍 Zoek materiaal op naam, categorie of ID..." oninput="filterModal(this.value)">
+      <button id="mat-modal-close" onclick="closeMaterialModal()">✕ Sluiten</button>
+    </div>
+    <div id="mat-modal-body">
+      <div id="mat-cat-list"></div>
+      <div style="flex:1;display:flex;flex-direction:column;overflow:hidden;min-height:0">
+        <div class="mat-list-hdr">
+          <span>Materiaal</span><span style="text-align:center">Eenheid</span><span style="text-align:right">MKI / eenheid</span>
+        </div>
+        <div id="mat-modal-count"></div>
+        <div id="mat-item-list"></div>
+      </div>
+    </div>
+  </div>
+</div>
 
 <!-- ═══════════ ADMIN PANEL ═══════════ -->
 <div id="admin-panel" style="display:none;position:fixed;inset:0;background:rgba(8,25,55,.88);z-index:999997;align-items:center;justify-content:center;backdrop-filter:blur(6px);padding:16px;box-sizing:border-box">
