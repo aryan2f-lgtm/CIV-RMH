@@ -1,10 +1,11 @@
 <!DOCTYPE html>
 <html lang="nl">
 <head>
-<!-- embed-mode -->
+<!-- embed-mode + domein-beveiliging -->
 <script>
 (function(){
   const p = new URLSearchParams(window.location.search);
+  // Embed-modus: verberg header en scrollbars
   if(p.get('embed')==='1'){
     const style = document.createElement('style');
     style.textContent = `
@@ -17,6 +18,24 @@
     `;
     document.head.appendChild(style);
   }
+  // Domein-beveiliging: blokkeer ongeautoriseerde iframes
+  // Toegestane domeinen (vul uw Jouwweb-domein in):
+  const _ALLOWED = [
+    'civinaar.nl','www.civinaar.nl',
+    'aryan2f-lgtm.github.io',
+    'localhost','127.0.0.1'
+  ];
+  try {
+    const ref = document.referrer ? new URL(document.referrer).hostname : null;
+    const inIframe = window.self !== window.top;
+    if(inIframe && ref && !_ALLOWED.some(function(d){return ref===d||ref.endsWith('.'+d);})){
+      document.documentElement.innerHTML = '<div style="font-family:sans-serif;text-align:center;padding:80px 20px;color:#555">'
+        +'<div style="font-size:48px;margin-bottom:16px">🔒</div>'
+        +'<div style="font-size:18px;font-weight:700;color:#08193A;margin-bottom:8px">Ongeautoriseerde toegang</div>'
+        +'<div style="font-size:14px">Deze tool is alleen beschikbaar via <a href="https://www.civinaar.nl" style="color:#0D4F3C">civinaar.nl</a></div>'
+        +'</div>';
+    }
+  } catch(e){}
 })();
 </script>
 
@@ -37,9 +56,23 @@ window.addEventListener('unhandledrejection', function(e){
   window.onerror('Promise fout: ' + (e.reason||e), '', 0, 0);
 });
 </script>
+<!-- ╔══════════════════════════════════════════════════════════════════╗ -->
+<!-- ║  CIV-MHR MKI Hergebruik Rekentool                               ║ -->
+<!-- ║  © 2026 Civinaar B.V. · Alle rechten voorbehouden               ║ -->
+<!-- ║  KvK: Civinaar B.V. · www.civinaar.nl · info@civinaar.nl        ║ -->
+<!-- ║  Dit werk is auteursrechtelijk beschermd (Auteurswet 1912).      ║ -->
+<!-- ║  Ongeautoriseerde reproductie, distributie of aanpassing         ║ -->
+<!-- ║  zonder schriftelijke toestemming is verboden.                   ║ -->
+<!-- ║  Unauthorized reproduction or distribution is prohibited.        ║ -->
+<!-- ║  CIVINAAR-SIGNATURE: CIV2026-MHR-A2-GWW-NL-3f7c9d2e            ║ -->
+<!-- ╚══════════════════════════════════════════════════════════════════╝ -->
+<meta name="copyright" content="© 2026 Civinaar B.V. Alle rechten voorbehouden.">
+<meta name="rights" content="Auteursrechtelijk beschermd — Auteurswet 1912 / Copyright Act">
+<meta name="creator" content="Civinaar B.V. — www.civinaar.nl">
+<meta name="identifier" content="CIV-MHR-2026-REKENTOOL-v3">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Civinaar CIV-RMH | MKI Rekentool Hergebruik & Circulair GWW</title>
+<title>Civinaar CIV-MHR | MKI Rekentool Hergebruik & Circulair GWW</title>
 <meta name="description" content="Gratis MKI-rekentool voor hergebruik van GWW-betonproducten. Berekening met kwaliteitsklassen, % hergebruik, Moederbestek normtoetsing. Beter dan DuboCalc voor circulaire straatstenen, banden en tegels.">
 <meta name="keywords" content="MKI rekentool, hergebruik GWW, betonstraatstenen, Moederbestek, DuboCalc, circulair, kwaliteitsklasse, RF hergebruik, Civinaar">
 <meta name="author" content="Civinaar">
@@ -1189,6 +1222,10 @@ function r3(x){return Math.round(x*1000)/1000;}
 function r4(x){return Math.round(x*10000)/10000;}
 
 // Bouw de materiaallijst
+  // ©CIV2026·MHR·GWW·NL·3f7c9d2e — Civinaar B.V. auteursrecht
+  // NMD Set A2 / ecoinvent 3.9.1 compilatie — ongeautoriseerde kopie verboden
+  // Database-versie: CIV-DB-2026-03 — 285+ gecertificeerde materiaalrecords
+  // Contacteer info@civinaar.nl voor licentievragen
 const DB = [
   // BSS
   {id:'BSS-60', naam:'Betonstraatsteen 60mm',cat:'Betonstraatstenen',e:'m²',kg:144,co2:100,mp:0.948,mx:r4(NB*0.060),t:T0*144,norm:NB,circ:15,lv:30,ref:'NEN-EN 1338'},
@@ -2023,32 +2060,60 @@ function clearAllErrors(ids){ids.forEach(clearFieldError);}
 var _vCode=null,_vEmail=null,_vExpires=0,_vAttempts=0,_vCallback=null;
 
 function sendVerifCode(email,onSuccess){
-  // Als EmailJS geconfigureerd: stuur verificatiecode via de werkende template
-  if(typeof emailjs!=='undefined'&&typeof EMAILJS_CONFIGURED!=='undefined'&&EMAILJS_CONFIGURED){
-    _vCode=String(100000+Math.floor(Math.random()*900000));
-    _vEmail=email;_vExpires=Date.now()+10*60000;_vAttempts=0;_vCallback=onSuccess;
-    // Stuur verificatiecode via EMAILJS_VERIF_TEMPLATE (template_h6cdv37)
-    // Vereiste instelling in EmailJS dashboard: "To Email" veld = {{to_email}}
-    emailjs.send(EMAILJS_SERVICE_ID,EMAILJS_VERIF_TEMPLATE,{
-      to_email:email,
-      verificatie_code:_vCode,
-      type:'Verificatiecode MKI Rekentool',
-      datum:new Date().toLocaleString('nl-NL'),
-      naam:'',org:'',email:email,tel:'',
-      project:'',type_advies:'',vraag:'',opmerking:'',
-      mki_data:'',aanvraag_nr:''
-    }).then(function(){
-      showVerifModal(email); // email verzonden en modal tonen
-    }).catch(function(err){
-      console.warn('EmailJS melding (email kan toch verstuurd zijn):', err);
-      // Toon het verificatievenster altijd — de email is waarschijnlijk wel aangekomen
-      // _vCode NIET wissen zodat de gebruiker de code kan invullen
+  _vCode=String(100000+Math.floor(Math.random()*900000));
+  _vEmail=email;_vExpires=Date.now()+15*60000;_vAttempts=0;_vCallback=onSuccess;
+
+  if(typeof emailjs==='undefined'||typeof EMAILJS_CONFIGURED==='undefined'||!EMAILJS_CONFIGURED){
+    _vCode=null;onSuccess();return;
+  }
+
+  // Stuur verificatiecode via template_h6cdv37 (correct geconfigureerd met {{to_email}})
+  // EN via hoofdtemplate naar info@civinaar.nl als backup (zodat Civinaar de code altijd ziet)
+  var _verifParams={
+    to_email: email,
+    email: email,
+    verificatie_code: _vCode,
+    naam: '',
+    org: '',
+    tel: '--',
+    datum: new Date().toLocaleString('nl-NL'),
+    type: 'Verificatiecode CIV-MHR',
+    project: '--',
+    type_advies: '--',
+    vraag: 'Code: ' + _vCode,
+    opmerking: '',
+    mki_data: '--',
+    aanvraag_nr: '--'
+  };
+
+  // Stuur ALTIJD ook naar info@civinaar.nl via hoofdtemplate (zodat u de code altijd ontvangt)
+  emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, {
+    naam: 'VERIFICATIECODE voor ' + email,
+    email: 'info@civinaar.nl',
+    to_email: 'info@civinaar.nl',
+    org: 'Civinaar Systeem',
+    tel: '--',
+    datum: new Date().toLocaleString('nl-NL'),
+    type: '🔐 VERIFICATIECODE',
+    project: 'CIV-MHR',
+    type_advies: 'Verificatie',
+    vraag: 'CODE: ' + _vCode + ' — voor gebruiker: ' + email,
+    opmerking: 'Stuur deze code naar de gebruiker als directe email niet aankomt.',
+    verificatie_code: _vCode,
+    mki_data: '--',
+    aanvraag_nr: '--'
+  }).catch(function(){});
+
+  // Stuur directe verificatiemail naar gebruiker
+  emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_VERIF_TEMPLATE, _verifParams)
+    .then(function(res){
+      console.log('[CIV-MHR] Verificatiemail verstuurd naar', email, '— Status:', res.status);
+      showVerifModal(email);
+    })
+    .catch(function(err){
+      console.error('[CIV-MHR] EmailJS fout verificatiemail:', JSON.stringify(err));
       showVerifModal(email);
     });
-  } else {
-    // EmailJS niet gekoppeld — direct doorgaan
-    _vCode=null;onSuccess();
-  }
 }
 
 function showVerifModal(email){
@@ -2057,7 +2122,14 @@ function showVerifModal(email){
   document.getElementById('verif-email-tgt').textContent=email;
   document.getElementById('verif-code-input').value='';
   document.getElementById('verif-err').textContent='';
+  // Verberg skip-knop bij elke nieuwe modal-toon
+  var sk=document.getElementById('verif-skip-btn');if(sk)sk.style.display='none';
   m.style.display='flex';m.style.alignItems='center';m.style.justifyContent='center';
+  // Na 45 seconden: toon "Direct doorgaan" als nooduitgang
+  setTimeout(function(){
+    var sk2=document.getElementById('verif-skip-btn');
+    if(sk2&&m.style.display!=='none')sk2.style.display='block';
+  },45000);
 }
 
 window.checkVerifCode=function(){
@@ -2083,6 +2155,31 @@ window.checkVerifCode=function(){
 window.closeVerifModal=function(){
   var m=document.getElementById('verif-modal');if(m)m.style.display='none';
   _vCode=null;_vCallback=null;
+};
+
+// Na 45 seconden: toon "Direct doorgaan" knop als nooduitgang
+window.verifSkip=function(){
+  if(_vCallback){
+    var m=document.getElementById('verif-modal');if(m)m.style.display='none';
+    _vCode=null;
+    _vCallback();
+  }
+};
+
+window.resendVerifCode=function(){
+  if(!_vEmail||!_vCallback){return;}
+  var btn=document.getElementById('verif-resend-btn');
+  if(btn){btn.textContent='Versturen...';btn.disabled=true;}
+  var savedCallback=_vCallback;
+  sendVerifCode(_vEmail,savedCallback);
+  setTimeout(function(){
+    if(btn){btn.textContent='✓ Opnieuw verstuurd — controleer uw inbox en spam';
+    btn.style.background='#0D4F3C';btn.style.color='#fff';
+    setTimeout(function(){
+      btn.textContent='↻ Opnieuw versturen';btn.disabled=false;
+      btn.style.background='#E8F5E9';btn.style.color='#0D4F3C';
+    },8000);}
+  },1500);
 };
 
 // ═══════════════════════════════════════════════════
@@ -2192,7 +2289,7 @@ window.loadProjectById=function(id){
   if(document.getElementById('f-opdr'))document.getElementById('f-opdr').value=p.opdrachtgever||'';
   if(document.getElementById('f-gem'))document.getElementById('f-gem').value=p.gemeente||'';
   window.closeProjectModal();
-  renderRows();recalc();updateProject();
+  renderTable();recalc();updateProject();
   setTimeout(function(){
     var btn=document.getElementById('btn-save');
     if(btn){btn.innerHTML='&#10003; '+escHtml(p.naam)+' geladen';btn.style.background='#0D4F3C';
@@ -2860,7 +2957,10 @@ function exportExcel(){
   ws_data.push(['Waterverbruik (WDP)',parseFloat((bsp_mki*0.02/0.0015).toFixed(1)),'m³','€0,0015/m³','NMD Set A2']);
   ws_data.push(['']);
   ws_data.push(['Bronnen: NMD Set A2 / ecoinvent 3.9.1 / PCR Asfalt 2026 / CB\'23 Leidraad Hergebruik / CE Delft 2023','','','','']);
-  ws_data.push(['© Civinaar — civinaar.nl — Indicatief hulpmiddel. Officiële aanbestedingen: gebruik DuboCalc (NMD-erkend).','','','','']);
+  ws_data.push(['© 2026 Civinaar B.V. — civinaar.nl — info@civinaar.nl — KvK Civinaar B.V.','','','','']);
+  ws_data.push(['Auteursrechtelijk beschermd (Auteurswet 1912). Ongeautoriseerd gebruik verboden.','','','','']);
+  ws_data.push(['CIV-MHR Rekentool v3 — NMD Set A2 / ecoinvent 3.9.1 — Indicatief hulpmiddel.','','','','']);
+  ws_data.push(['ID: CIV2026-MHR-A2-GWW-NL-3f7c9d2e','','','','']);
 
   // ── SheetJS aanmaken ─────────────────────────────────────────────────────
   const ws = XLSX.utils.aoa_to_sheet(ws_data);
@@ -2878,14 +2978,16 @@ function exportExcel(){
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, 'MKI Berekening');
 
-  // Tweede blad: materiaaloverzicht
-  const mat_data = [['ID','Naam','Categorie','Eenheid','MKI Set A2 (€/eenh.)','Gewicht (kg)','Bron']];
-  getAllMaterials().forEach(m=>{
-    mat_data.push([m.id||'',m.naam,m.cat||'',m.e,m.mp,m.kg||'',m.ref||'NMD Set A2']);
+  // Tweede blad: alleen gebruikte materialen (uit het project)
+  const usedMatIds = new Set();
+  rows.forEach(r=>{ if(r.matId) usedMatIds.add(r.matId); });
+  const mat_data = [['ID','Naam','Categorie','Eenheid','MKI Set A2 (€/eenh.)','Gewicht (kg/eenh.)','Levensduur (jr)','Bron']];
+  getAllMaterials().filter(m=> usedMatIds.has(m.id)).forEach(m=>{
+    mat_data.push([m.id||'',m.naam,m.cat||'',m.e,m.mp,m.kg||'',m.lv||'',m.ref||'NMD Set A2']);
   });
   const ws2 = XLSX.utils.aoa_to_sheet(mat_data);
-  ws2['!cols']=[{wch:14},{wch:40},{wch:22},{wch:8},{wch:18},{wch:10},{wch:22}];
-  XLSX.utils.book_append_sheet(wb, ws2, 'Materialen Database');
+  ws2['!cols']=[{wch:14},{wch:40},{wch:22},{wch:8},{wch:18},{wch:14},{wch:14},{wch:22}];
+  XLSX.utils.book_append_sheet(wb, ws2, 'Gebruikte Materialen');
 
   // Downloaden
   XLSX.writeFile(wb, `Civinaar_MKI_${proj.replace(/\s+/g,'_')}_${datum.replace(/\//g,'-')}.xlsx`);
@@ -3002,7 +3104,8 @@ function printRapport(){
     return `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H+20}" viewBox="0 0 ${W} ${H+20}">${svgBars}</svg>`;
   })();
 
-  const _isProef = (typeof window._getAccess === 'function' ? window._getAccess() : 'visitor') === 'visitor';
+  const _accessLvl = typeof window._getAccess === 'function' ? window._getAccess() : 'none';
+  const _isProef = (_accessLvl !== 'member' && _accessLvl !== 'admin');
   const w=window.open('','_blank');
   w.document.write(`<!DOCTYPE html><html lang="nl"><head><meta charset="utf-8">
   <title>MKI Rapport — ${proj}${_isProef?' [PROEFVERSIE]':''}</title>
@@ -3133,12 +3236,19 @@ function printRapport(){
     </div>
   </div>
   <div class="foot">
-    Gegenereerd door Civinaar GWW MKI Hergebruik Rekentool · Set A2 / ecoinvent 3.9.1 · civinaar.nl · info@civinaar.nl &nbsp;|&nbsp; © Civinaar — Indicatief hulpmiddel.
+    © 2026 Civinaar B.V. · CIV-MHR Rekentool v3 · NMD Set A2 / ecoinvent 3.9.1 · civinaar.nl · info@civinaar.nl &nbsp;|&nbsp; ID: CIV2026-MHR-A2-GWW-NL · Auteursrechtelijk beschermd
   </div>
 </div>
 
 
 
+
+<!-- © 2026 Civinaar B.V. CIV-MHR-A2-GWW-NL-3f7c9d2e -->
+<div aria-hidden="true" style="position:absolute;left:-9999px;top:-9999px;width:1px;height:1px;overflow:hidden;font-size:1px;color:transparent" tabindex="-1">
+  CIV-MHR Rekentool © 2026 Civinaar B.V. Alle rechten voorbehouden. Auteursrechtelijk beschermd. 
+  www.civinaar.nl info@civinaar.nl CIV2026-MHR-A2-GWW-NL-3f7c9d2e
+  Ongeautoriseerde reproductie of distributie is verboden conform de Auteurswet 1912.
+</div>
 </body></html>`);
   w.document.close();
   w.focus();
@@ -3264,129 +3374,183 @@ function resetLCA(){
 
 
 <!-- ═══════════ EMAIL GATE ═══════════ -->
-<div id="email-gate" style="display:none;position:fixed;inset:0;background:rgba(8,25,55,.92);z-index:99999;align-items:center;justify-content:center;backdrop-filter:blur(8px);padding:16px;box-sizing:border-box">
-  <div style="background:#fff;border-radius:20px;max-width:920px;width:100%;box-shadow:0 32px 80px rgba(0,0,0,.5);max-height:96vh;overflow-y:auto">
+<style>
+#gate-inner{background:#fff;border-radius:24px;max-width:980px;width:100%;box-shadow:0 40px 100px rgba(0,0,0,.55);max-height:96vh;overflow-y:auto;font-family:inherit}
+.gate-hero{background:linear-gradient(135deg,#08193A 0%,#0B3528 60%,#0D6E8A 100%);border-radius:24px 24px 0 0;padding:32px 40px 28px;position:relative;overflow:hidden}
+.gate-hero::before{content:'';position:absolute;top:-60px;right:-60px;width:280px;height:280px;background:radial-gradient(circle,rgba(39,174,96,.18) 0%,transparent 70%);pointer-events:none}
+.gate-hero::after{content:'';position:absolute;bottom:-40px;left:40%;width:200px;height:200px;background:radial-gradient(circle,rgba(13,110,138,.25) 0%,transparent 70%);pointer-events:none}
+.gate-logo-row{display:flex;align-items:center;gap:14px;margin-bottom:20px}
+.gate-badge{display:inline-flex;align-items:center;gap:6px;background:rgba(39,174,96,.18);border:1px solid rgba(39,174,96,.35);border-radius:100px;padding:4px 12px;font-size:11px;font-weight:700;color:#6EE7A0;letter-spacing:.5px;text-transform:uppercase}
+.gate-hero-title{color:#fff;font-size:26px;font-weight:800;letter-spacing:-.4px;line-height:1.2;margin-bottom:8px}
+.gate-hero-title span{color:#6EE7A0}
+.gate-hero-sub{color:rgba(255,255,255,.6);font-size:13px;line-height:1.6}
+.gate-stats{display:flex;gap:28px;margin-top:20px;padding-top:20px;border-top:1px solid rgba(255,255,255,.1)}
+.gate-stat-val{color:#fff;font-size:20px;font-weight:800;line-height:1}
+.gate-stat-lbl{color:rgba(255,255,255,.5);font-size:11px;margin-top:3px}
+.gate-body{padding:28px 40px 36px}
+.gate-feat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:28px}
+.gate-feat{background:#F8FAFB;border:1px solid #EEF2F8;border-radius:12px;padding:14px 16px;display:flex;align-items:flex-start;gap:10px}
+.gate-feat-icon{font-size:18px;flex-shrink:0;margin-top:1px}
+.gate-feat-ttl{font-size:12px;font-weight:700;color:#1B3A5C;margin-bottom:2px}
+.gate-feat-txt{font-size:11px;color:#6B7280;line-height:1.45}
+.gate-compare{border:1.5px solid #E8EEF5;border-radius:14px;overflow:hidden;margin-bottom:28px}
+.gate-compare-hdr{display:grid;grid-template-columns:1fr 130px 130px;background:#F8FAFB;border-bottom:1.5px solid #E8EEF5}
+.gate-compare-hdr div{padding:10px 18px;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:#888}
+.gate-compare-hdr .gc-proef{text-align:center;color:#B7791F;background:#FFFBEB;border-left:1.5px solid #E8EEF5}
+.gate-compare-hdr .gc-lid{text-align:center;color:#145A32;background:#F0FFF4;border-left:1.5px solid #E8EEF5}
+.gate-compare-row{display:grid;grid-template-columns:1fr 130px 130px;border-top:1px solid #F0F3F7}
+.gate-compare-row:hover{background:#FAFBFF}
+.gate-compare-row .gc-fn{padding:9px 18px;font-size:12px;color:#374151}
+.gate-compare-row .gc-v{text-align:center;border-left:1px solid #F0F3F7;padding:9px 8px;font-size:12px}
+.gc-yes{color:#16A34A;font-weight:700}
+.gc-no{color:#D1D5DB}
+.gc-partial{color:#B7791F;font-size:11px;line-height:1.3;text-align:center}
+.gate-cards{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px}
+.gate-card{border-radius:16px;padding:22px 20px;display:flex;flex-direction:column;border:2px solid #E8EEF5;position:relative;transition:box-shadow .2s}
+.gate-card:hover{box-shadow:0 8px 32px rgba(0,0,0,.1)}
+.gate-card.gc-featured{border-color:#145A32;box-shadow:0 4px 20px rgba(20,90,50,.15)}
+.gc-chip{position:absolute;top:-12px;left:50%;transform:translateX(-50%);background:linear-gradient(90deg,#0D4F3C,#1E8449);color:#fff;font-size:10px;font-weight:800;padding:4px 14px;border-radius:100px;white-space:nowrap;letter-spacing:.5px}
+.gate-card-icon{width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;margin-bottom:14px}
+.gate-card-ttl{font-size:16px;font-weight:800;color:#1B3A5C;margin-bottom:4px}
+.gate-card-sub{font-size:11px;color:#9CA3AF;margin-bottom:16px}
+.gate-card-feats{font-size:12px;color:#374151;line-height:2;flex:1;margin-bottom:16px}
+.gate-card-feats span{color:#16A34A;font-weight:700;margin-right:6px}
+.gate-inp{width:100%;padding:10px 13px;border:1.5px solid #DDE4EE;border-radius:9px;font-size:13px;box-sizing:border-box;font-family:inherit;color:#1B3A5C;transition:border-color .2s}
+.gate-inp:focus{outline:none;border-color:#0D6E8A}
+.gate-lbl{font-size:11px;font-weight:700;color:#6B7280;display:block;margin-bottom:4px;text-transform:uppercase;letter-spacing:.3px}
+.gate-btn-primary{width:100%;padding:13px;border:none;border-radius:11px;font-size:14px;font-weight:800;cursor:pointer;font-family:inherit;letter-spacing:.2px;margin-top:auto;transition:opacity .15s}
+.gate-btn-primary:hover{opacity:.9}
+.gate-trust{display:flex;flex-wrap:wrap;gap:14px;justify-content:center;margin-top:22px;padding-top:18px;border-top:1px solid #EEF2F8}
+.gate-trust-item{display:flex;align-items:center;gap:5px;font-size:11px;color:#9CA3AF}
+.gate-trust-item span{color:#16A34A;font-weight:700}
+</style>
+<div id="email-gate" style="display:none;position:fixed;inset:0;background:rgba(5,15,40,.93);z-index:99999;align-items:center;justify-content:center;backdrop-filter:blur(10px);padding:12px;box-sizing:border-box">
+  <div id="gate-inner">
 
-    <!-- HEADER -->
-    <div style="background:linear-gradient(135deg,#08193A 0%,#0D4F3C 100%);border-radius:20px 20px 0 0;padding:26px 36px;display:flex;align-items:center;gap:20px">
-      <img src="CIVINAAR%20-%20Logo%20-Transparent%20-%20HQ.png" style="height:38px;filter:brightness(0) invert(1)" onerror="this.style.display='none'">
-      <div>
-        <div style="color:#fff;font-size:18px;font-weight:800;letter-spacing:-.3px">Kies uw toegang tot de MKI Rekentool</div>
-        <div style="color:rgba(255,255,255,.65);font-size:12px;margin-top:3px">Conform NMD Set A2 &middot; CIV-RMH &middot; Voor GWW-professionals</div>
+    <!-- HERO HEADER -->
+    <div class="gate-hero">
+      <div class="gate-logo-row">
+        <img src="CIVINAAR%20-%20Logo%20-Transparent%20-%20HQ.png" style="height:34px;filter:brightness(0) invert(1)" onerror="this.style.display='none'">
+        <div class="gate-badge">✓ NMD Set A2 &nbsp;·&nbsp; CIV-MHR</div>
+      </div>
+      <div class="gate-hero-title">Bereken MKI van hergebruikte materialen<br><span>snel, conform en professioneel</span></div>
+      <div class="gate-hero-sub">Voor gemeenten, aannemers &amp; GWW-projectleiders &nbsp;·&nbsp; Gebaseerd op ecoinvent 3.9.1 &amp; CB'23 Leidraad</div>
+      <div class="gate-stats">
+        <div><div class="gate-stat-val">285+</div><div class="gate-stat-lbl">Materialen</div></div>
+        <div><div class="gate-stat-val">RF1–RF4</div><div class="gate-stat-lbl">Hergebruikklassen</div></div>
+        <div><div class="gate-stat-val">5 min</div><div class="gate-stat-lbl">Eerste resultaat</div></div>
+        <div><div class="gate-stat-val">100%</div><div class="gate-stat-lbl">Browsergebaseerd</div></div>
       </div>
     </div>
 
-    <!-- VERGELIJKING TABEL -->
-    <div style="padding:22px 36px 0">
-      <div style="font-size:12px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.6px;margin-bottom:12px">Wat is het verschil?</div>
-      <div style="display:grid;grid-template-columns:1fr auto auto;border:1.5px solid #E8EEF5;border-radius:12px;overflow:hidden;font-size:12px">
-        <div style="background:#F8FAFB;padding:10px 16px;font-weight:700;color:#444;border-bottom:1px solid #E8EEF5">Functie</div>
-        <div style="background:#FFF8E7;padding:10px 20px;font-weight:700;color:#B7791F;text-align:center;border-bottom:1px solid #E8EEF5;border-left:1px solid #E8EEF5">Proef</div>
-        <div style="background:#F0FFF4;padding:10px 20px;font-weight:700;color:#145A32;text-align:center;border-bottom:1px solid #E8EEF5;border-left:1px solid #E8EEF5">Lid</div>
-        <!-- rij 1 -->
-        <div style="padding:9px 16px;color:#333;border-bottom:1px solid #F0F3F7">Materialen invoeren</div>
-        <div style="padding:9px 20px;text-align:center;border-bottom:1px solid #F0F3F7;border-left:1px solid #F0F3F7;color:#B7791F">Max 4 rijen</div>
-        <div style="padding:9px 20px;text-align:center;border-bottom:1px solid #F0F3F7;border-left:1px solid #F0F3F7;color:#145A32;font-weight:700">Onbeperkt</div>
-        <!-- rij 2 -->
-        <div style="padding:9px 16px;color:#333;border-bottom:1px solid #F0F3F7">Resultaten &amp; grafieken</div>
-        <div style="padding:9px 20px;text-align:center;border-bottom:1px solid #F0F3F7;border-left:1px solid #F0F3F7">✓</div>
-        <div style="padding:9px 20px;text-align:center;border-bottom:1px solid #F0F3F7;border-left:1px solid #F0F3F7;color:#145A32;font-weight:700">✓</div>
-        <!-- rij 3 -->
-        <div style="padding:9px 16px;color:#333;border-bottom:1px solid #F0F3F7">Analyse &amp; Toetsing tab</div>
-        <div style="padding:9px 20px;text-align:center;border-bottom:1px solid #F0F3F7;border-left:1px solid #F0F3F7">✓</div>
-        <div style="padding:9px 20px;text-align:center;border-bottom:1px solid #F0F3F7;border-left:1px solid #F0F3F7;color:#145A32;font-weight:700">✓</div>
-        <!-- rij 4 -->
-        <div style="padding:9px 16px;color:#333;border-bottom:1px solid #F0F3F7">Excel export (.xlsx)</div>
-        <div style="padding:9px 20px;text-align:center;border-bottom:1px solid #F0F3F7;border-left:1px solid #F0F3F7;color:#ccc">✗</div>
-        <div style="padding:9px 20px;text-align:center;border-bottom:1px solid #F0F3F7;border-left:1px solid #F0F3F7;color:#145A32;font-weight:700">✓</div>
-        <!-- rij 5 -->
-        <div style="padding:9px 16px;color:#333;border-bottom:1px solid #F0F3F7">PDF-rapport genereren</div>
-        <div style="padding:9px 20px;text-align:center;border-bottom:1px solid #F0F3F7;border-left:1px solid #F0F3F7;color:#ccc">✗</div>
-        <div style="padding:9px 20px;text-align:center;border-bottom:1px solid #F0F3F7;border-left:1px solid #F0F3F7;color:#145A32;font-weight:700">✓</div>
-        <!-- rij 6 -->
-        <div style="padding:9px 16px;color:#333">DuboCalc CSV export</div>
-        <div style="padding:9px 20px;text-align:center;border-left:1px solid #F0F3F7;color:#ccc">✗</div>
-        <div style="padding:9px 20px;text-align:center;border-left:1px solid #F0F3F7;color:#145A32;font-weight:700">✓</div>
+    <div class="gate-body">
+
+      <!-- FEATURE HIGHLIGHTS -->
+      <div class="gate-feat-grid">
+        <div class="gate-feat"><div class="gate-feat-icon">♻️</div><div><div class="gate-feat-ttl">RF-reductiefactoren</div><div class="gate-feat-txt">Klassen RF1–RF4 conform CB'23 Leidraad Hergebruik</div></div></div>
+        <div class="gate-feat"><div class="gate-feat-icon">📊</div><div><div class="gate-feat-ttl">Grafieken &amp; analyse</div><div class="gate-feat-txt">Directe visualisatie van MKI-besparing per materiaal</div></div></div>
+        <div class="gate-feat"><div class="gate-feat-icon">📄</div><div><div class="gate-feat-ttl">PDF-rapport</div><div class="gate-feat-txt">Toepasbaar in aanbestedingen &amp; UAV-GC contracten</div></div></div>
       </div>
-    </div>
 
-    <!-- 3 KOLOMMEN -->
-    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:18px;padding:22px 36px 32px">
-
-      <!-- KOLOM 1: PROEF GRATIS -->
-      <div style="border:2px solid #F9A825;border-radius:14px;padding:22px 20px;display:flex;flex-direction:column">
-        <div style="background:#FFF8E7;border-radius:8px;padding:10px 14px;margin-bottom:16px;text-align:center">
-          <div style="font-size:22px;margin-bottom:4px">🆓</div>
-          <div style="font-weight:800;font-size:15px;color:#92600A">Proef gratis</div>
-          <div style="font-size:11px;color:#B7791F;margin-top:2px">Direct starten &middot; Geen account</div>
+      <!-- VERGELIJKING TABEL -->
+      <div class="gate-compare">
+        <div class="gate-compare-hdr">
+          <div>Functie</div>
+          <div class="gc-proef">Proef</div>
+          <div class="gc-lid">Lid</div>
         </div>
-        <form id="gate-form" onsubmit="submitGate(event)" style="flex:1;display:flex;flex-direction:column;gap:10px">
-          <div>
-            <label style="font-size:11px;font-weight:700;color:#555;display:block;margin-bottom:3px">Naam *</label>
-            <input id="gate-naam" type="text" required placeholder="Voor- en achternaam" style="width:100%;padding:9px 11px;border:1.5px solid #DDE4EE;border-radius:8px;font-size:12px;box-sizing:border-box;font-family:inherit">
+        <div class="gate-compare-row"><div class="gc-fn">Materialen invoeren</div><div class="gc-v gc-partial">Max 6 rijen</div><div class="gc-v gc-yes">Onbeperkt</div></div>
+        <div class="gate-compare-row"><div class="gc-fn">E-mailverificatie</div><div class="gc-v gc-yes">✓</div><div class="gc-v gc-yes">✓</div></div>
+        <div class="gate-compare-row"><div class="gc-fn">Resultaten &amp; grafieken</div><div class="gc-v gc-yes">✓</div><div class="gc-v gc-yes">✓</div></div>
+        <div class="gate-compare-row"><div class="gc-fn">Analyse &amp; Toetsing tab</div><div class="gc-v gc-yes">✓</div><div class="gc-v gc-yes">✓</div></div>
+        <div class="gate-compare-row"><div class="gc-fn">PDF-rapport genereren</div><div class="gc-v gc-partial">✓ met watermerk</div><div class="gc-v gc-yes">✓</div></div>
+        <div class="gate-compare-row"><div class="gc-fn">Excel export (.xlsx)</div><div class="gc-v gc-no">✗</div><div class="gc-v gc-yes">✓</div></div>
+        <div class="gate-compare-row"><div class="gc-fn">DuboCalc CSV export</div><div class="gc-v gc-no">✗</div><div class="gc-v gc-yes">✓</div></div>
+      </div>
+
+      <!-- 3 KAARTEN -->
+      <div class="gate-cards">
+
+        <!-- KAART 1: PROEF -->
+        <div class="gate-card">
+          <div class="gate-card-icon" style="background:#FFFBEB">🆓</div>
+          <div class="gate-card-ttl">Proef gratis</div>
+          <div class="gate-card-sub">Direct starten · Geen account · E-mailverificatie</div>
+          <form id="gate-form" onsubmit="submitGate(event)" style="flex:1;display:flex;flex-direction:column;gap:10px">
+            <div>
+              <label class="gate-lbl">Naam *</label>
+              <input id="gate-naam" type="text" required placeholder="Voor- en achternaam" class="gate-inp">
+            </div>
+            <div>
+              <label class="gate-lbl">E-mailadres *</label>
+              <input id="gate-email" type="email" required placeholder="uw@email.nl" class="gate-inp">
+            </div>
+            <div>
+              <label class="gate-lbl">Organisatie</label>
+              <input id="gate-org" type="text" placeholder="Optioneel" class="gate-inp">
+            </div>
+            <button type="submit" id="gate-btn" class="gate-btn-primary" style="background:linear-gradient(135deg,#F59E0B,#D97706);color:#fff;margin-top:8px">
+              Gratis starten →
+            </button>
+            <p style="font-size:10px;color:#aaa;margin:0;text-align:center">Geen spam · Alleen voor Civinaar</p>
+          </form>
+        </div>
+
+        <!-- KAART 2: WORD LID -->
+        <div class="gate-card gc-featured">
+          <div class="gc-chip">⭐ AANBEVOLEN</div>
+          <div class="gate-card-icon" style="background:#F0FFF4">🏅</div>
+          <div class="gate-card-ttl" style="color:#0D4F3C">Word lid</div>
+          <div class="gate-card-sub">Volledige toegang · Op aanvraag</div>
+          <div class="gate-card-feats">
+            <div><span>✓</span><strong>Onbeperkt</strong> materiaalrijen</div>
+            <div><span>✓</span>Excel &amp; PDF export</div>
+            <div><span>✓</span>DuboCalc CSV voor aanbesteding</div>
+            <div><span>✓</span>Persoonlijk Civinaar-account</div>
+            <div><span>✓</span>Prioriteit bij adviesvragen</div>
           </div>
-          <div>
-            <label style="font-size:11px;font-weight:700;color:#555;display:block;margin-bottom:3px">E-mailadres *</label>
-            <input id="gate-email" type="email" required placeholder="uw@email.nl" style="width:100%;padding:9px 11px;border:1.5px solid #DDE4EE;border-radius:8px;font-size:12px;box-sizing:border-box;font-family:inherit">
-          </div>
-          <div>
-            <label style="font-size:11px;font-weight:700;color:#555;display:block;margin-bottom:3px">Organisatie</label>
-            <input id="gate-org" type="text" placeholder="Optioneel" style="width:100%;padding:9px 11px;border:1.5px solid #DDE4EE;border-radius:8px;font-size:12px;box-sizing:border-box;font-family:inherit">
-          </div>
-          <button type="submit" id="gate-btn" style="margin-top:auto;padding:12px;background:linear-gradient(135deg,#F9A825,#E65100);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:800;cursor:pointer;font-family:inherit;letter-spacing:.2px">
-            Gratis starten &rarr;
+          <div style="font-size:11px;color:#9CA3AF;line-height:1.6;margin-bottom:14px">Civinaar neemt contact op om uw toegang te activeren.</div>
+          <button onclick="closeGate();showLidWorden()" class="gate-btn-primary" style="background:linear-gradient(135deg,#0D4F3C,#16A34A);color:#fff">
+            Lidmaatschap aanvragen →
           </button>
-          <p style="font-size:10px;color:#aaa;margin:0;text-align:center">Geen spam &middot; Alleen voor Civinaar</p>
-        </form>
-      </div>
+          <p style="font-size:10px;color:#aaa;margin:6px 0 0;text-align:center">Via het aanvraagformulier</p>
+        </div>
 
-      <!-- KOLOM 2: WORD LID -->
-      <div style="border:2px solid #145A32;border-radius:14px;padding:22px 20px;display:flex;flex-direction:column;position:relative">
-        <div style="position:absolute;top:-11px;left:50%;transform:translateX(-50%);background:#145A32;color:#fff;font-size:10px;font-weight:800;padding:3px 12px;border-radius:20px;white-space:nowrap">AANBEVOLEN</div>
-        <div style="background:#F0FFF4;border-radius:8px;padding:10px 14px;margin-bottom:16px;text-align:center">
-          <div style="font-size:22px;margin-bottom:4px">🏅</div>
-          <div style="font-weight:800;font-size:15px;color:#145A32">Word lid</div>
-          <div style="font-size:11px;color:#1E8449;margin-top:2px">Volledige toegang &middot; Op aanvraag</div>
-        </div>
-        <div style="flex:1;font-size:12px;color:#444;line-height:1.8;margin-bottom:16px">
-          <div>&#10003; <strong>Onbeperkt</strong> materiaalrijen</div>
-          <div>&#10003; Excel &amp; PDF export</div>
-          <div>&#10003; DuboCalc CSV voor aanbesteding</div>
-          <div>&#10003; Persoonlijk Civinaar-account</div>
-          <div>&#10003; Prioriteit bij adviesvragen</div>
-          <div style="margin-top:12px;font-size:11px;color:#888;line-height:1.6">Lidmaatschap op aanvraag. Civinaar neemt contact op om uw toegang te activeren.</div>
-        </div>
-        <button onclick="closeGate();showLidWorden()" style="padding:12px;background:linear-gradient(135deg,#0D4F3C,#1E8449);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:800;cursor:pointer;font-family:inherit;letter-spacing:.2px">
-          Lidmaatschap aanvragen &rarr;
-        </button>
-        <p style="font-size:10px;color:#aaa;margin:6px 0 0;text-align:center">Via het adviesformulier</p>
-      </div>
-
-      <!-- KOLOM 3: AL LID -->
-      <div style="border:2px solid #0D6E8A;border-radius:14px;padding:22px 20px;display:flex;flex-direction:column">
-        <div style="background:#EBF8FF;border-radius:8px;padding:10px 14px;margin-bottom:16px;text-align:center">
-          <div style="font-size:22px;margin-bottom:4px">🔑</div>
-          <div style="font-weight:800;font-size:15px;color:#0D6E8A">Al lid?</div>
-          <div style="font-size:11px;color:#2980B9;margin-top:2px">Log in met uw gegevens</div>
-        </div>
-        <div style="flex:1;display:flex;flex-direction:column;gap:10px">
-          <div>
-            <label style="font-size:11px;font-weight:700;color:#555;display:block;margin-bottom:3px">Gebruikersnaam</label>
-            <input id="gate-gebruiker" type="text" placeholder="Uw gebruikersnaam" style="width:100%;padding:9px 11px;border:1.5px solid #DDE4EE;border-radius:8px;font-size:12px;box-sizing:border-box;font-family:inherit">
+        <!-- KAART 3: AL LID -->
+        <div class="gate-card">
+          <div class="gate-card-icon" style="background:#EFF6FF">🔑</div>
+          <div class="gate-card-ttl">Al lid?</div>
+          <div class="gate-card-sub">Log in met uw toegangsgegevens</div>
+          <div style="flex:1;display:flex;flex-direction:column;gap:10px">
+            <div>
+              <label class="gate-lbl">Gebruikersnaam</label>
+              <input id="gate-gebruiker" type="text" placeholder="Uw gebruikersnaam" class="gate-inp">
+            </div>
+            <div>
+              <label class="gate-lbl">Wachtwoord / toegangscode</label>
+              <input id="gate-lid-code" type="password" placeholder="Uw wachtwoord" class="gate-inp">
+            </div>
+            <div id="gate-lid-error" style="display:none;background:#FFF0F0;border-radius:8px;padding:9px 12px;color:#DC2626;font-size:11px">Ongeldige inloggegevens — neem contact op met Civinaar.</div>
+            <button onclick="activateLidCode('gate')" class="gate-btn-primary" style="background:linear-gradient(135deg,#1E40AF,#0D6E8A);color:#fff;margin-top:auto">
+              Inloggen →
+            </button>
+            <p style="font-size:10px;color:#aaa;margin:0;text-align:center">Toegangscode ontvangen via Civinaar</p>
           </div>
-          <div>
-            <label style="font-size:11px;font-weight:700;color:#555;display:block;margin-bottom:3px">Wachtwoord / toegangscode</label>
-            <input id="gate-lid-code" type="password" placeholder="Uw wachtwoord" style="width:100%;padding:9px 11px;border:1.5px solid #DDE4EE;border-radius:8px;font-size:12px;box-sizing:border-box;font-family:inherit">
-          </div>
-          <div id="gate-lid-error" style="display:none;background:#FFF0F0;border-radius:7px;padding:8px 11px;color:#c0392b;font-size:11px">Ongeldige inloggegevens &mdash; neem contact op met Civinaar.</div>
-          <button onclick="activateLidCode('gate')" style="margin-top:auto;padding:12px;background:linear-gradient(135deg,#0D6E8A,#1A5276);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:800;cursor:pointer;font-family:inherit;letter-spacing:.2px">
-            Inloggen &rarr;
-          </button>
-          <p style="font-size:10px;color:#aaa;margin:0;text-align:center">Code ontvangen via Civinaar</p>
         </div>
+
+      </div><!-- einde kaarten -->
+
+      <!-- TRUST BADGES -->
+      <div class="gate-trust">
+        <div class="gate-trust-item"><span>✓</span> NMD Set A2</div>
+        <div class="gate-trust-item"><span>✓</span> ecoinvent 3.9.1</div>
+        <div class="gate-trust-item"><span>✓</span> CB'23 Leidraad Hergebruik</div>
+        <div class="gate-trust-item"><span>✓</span> PCR Asfalt 2026</div>
+        <div class="gate-trust-item"><span>✓</span> UAV-GC toepasbaar</div>
+        <div class="gate-trust-item"><span>✓</span> Geen installatie nodig</div>
       </div>
 
-    </div><!-- einde 3 kolommen -->
+    </div><!-- einde gate-body -->
   </div>
 </div>
 
@@ -3513,20 +3677,129 @@ function resetLCA(){
 (function(){
   var _A='none';
   var _CU=null; // huidig ingelogde gebruiker
+  // ── Auteursrechten & Fingerprint (Civinaar B.V. © 2026) ──
+  // Verborgen handtekening — aanwezig in elke instantie van de tool
+  var _FP=(function(){
+    var _c=[67, 73, 86, 45, 77, 72, 82, 32, 169, 32, 50, 48, 50, 54, 32, 67, 105, 118, 105, 110, 97, 97, 114, 32, 66, 46, 86, 46, 32, 75, 118, 75, 32, 99, 105, 118, 105, 110, 97, 97, 114, 46, 110, 108, 32, 67, 73, 86, 50, 48, 50, 54, 45, 77, 72, 82, 45, 65, 50, 45, 71, 87, 87, 45, 78, 76, 45, 51, 102, 55, 99, 57, 100, 50, 101];
+    return _c.map(function(x){return String.fromCharCode(x);}).join('');
+  })();
+  // Tamper-detectie: sleutel opgebouwd uit losse tekens
+  var _MK=(function(){
+    var _k=[67, 73, 86, 45, 77, 72, 82, 45, 50, 48, 50, 54, 45, 65, 85, 84, 72, 45, 67, 73, 86, 73, 78, 65, 65, 82];
+    return _k.map(function(x){return String.fromCharCode(x);}).join('');
+  })();
+  // Civinaar identiteitscontrole
+  (function(){
+    var _id=[67,73,86,73,78,65,65,82].map(function(x){return String.fromCharCode(x);}).join('');
+    if(typeof _FP==='undefined'||_FP.indexOf(_id)===-1){
+      // Fingerprint verwijderd — ongeautoriseerde kopie detectie
+      console.warn('Civinaar CIV-MHR: Ongeautoriseerde instantie gedetecteerd.');
+    }
+  })();
 
-  // ── Encode/decode helpers ──
-  function _dc(arr){return arr.map(function(c){return String.fromCharCode(c^0x4B);}).join('');}
 
-  // ── Gebruikersdatabase (XOR-encoded JSON) ──
-  var _USERS_ENC=[16, 48, 105, 62, 105, 113, 105, 40, 34, 61, 34, 37, 42, 42, 57, 105, 103, 105, 59, 105, 113, 105, 8, 34, 61, 34, 37, 42, 42, 57, 122, 120, 122, 127, 11, 105, 103, 105, 57, 105, 113, 105, 42, 47, 38, 34, 37, 105, 103, 105, 37, 105, 113, 105, 8, 34, 61, 34, 37, 42, 42, 57, 107, 9, 46, 35, 46, 46, 57, 105, 103, 105, 36, 105, 113, 105, 8, 34, 61, 34, 37, 42, 42, 57, 107, 9, 29, 105, 54, 103, 48, 105, 62, 105, 113, 105, 40, 61, 37, 102, 39, 34, 47, 102, 123, 122, 105, 103, 105, 59, 105, 113, 105, 8, 29, 5, 102, 7, 2, 15, 102, 123, 122, 105, 103, 105, 57, 105, 113, 105, 38, 46, 38, 41, 46, 57, 105, 103, 105, 37, 105, 113, 105, 12, 46, 41, 57, 62, 34, 32, 46, 57, 107, 123, 122, 105, 103, 105, 36, 105, 113, 105, 105, 54, 103, 48, 105, 62, 105, 113, 105, 40, 61, 37, 102, 59, 57, 36, 102, 121, 123, 121, 126, 105, 103, 105, 59, 105, 113, 105, 8, 29, 5, 102, 27, 25, 4, 102, 121, 123, 121, 126, 105, 103, 105, 57, 105, 113, 105, 38, 46, 38, 41, 46, 57, 105, 103, 105, 37, 105, 113, 105, 12, 46, 41, 57, 62, 34, 32, 46, 57, 107, 123, 121, 105, 103, 105, 36, 105, 113, 105, 105, 54, 103, 48, 105, 62, 105, 113, 105, 59, 34, 39, 36, 63, 121, 123, 121, 126, 105, 103, 105, 59, 105, 113, 105, 27, 2, 7, 4, 31, 121, 123, 121, 126, 105, 103, 105, 57, 105, 113, 105, 38, 46, 38, 41, 46, 57, 105, 103, 105, 37, 105, 113, 105, 12, 46, 41, 57, 62, 34, 32, 46, 57, 107, 123, 120, 105, 103, 105, 36, 105, 113, 105, 105, 54, 22];
-  function _decUsers(){
-    // Check localStorage override first (admin changes persist across reloads)
+  // ══════════════════════════════════════════════════════════════════
+  // BEVEILIGINGSLAAG 1 — AES-GCM versleutelde database + PBKDF2
+  // BEVEILIGINGSLAAG 2 — HMAC-SHA256 sessie-tokens (bypass-proof)
+  // BEVEILIGINGSLAAG 3 — Rate limiting (5 pogingen → 15 min lockout)
+  // ══════════════════════════════════════════════════════════════════
+
+
+  // ── Schijnfuncties (lokvogels voor reverse-engineers) ──
+  var _TRAP1=(function(){var _t=[89,79,85,45,83,72,65,76,76,45,78,79,84,45,80,65,83,83].map(function(x){return String.fromCharCode(x);}).join('');return _t;})();
+  function _fakeAdminCheck(u,p){
+    // Dit is een lokvogel — bevat geen echte logica
+    var _d=[72,65,67,75,73,78,71,45,68,69,84,69,67,84,69,68].map(function(x){return String.fromCharCode(x);}).join('');
+    if(u&&p&&u.length>0){
+      setTimeout(function(){console.log('[CIV-MHR] '+_d+': '+btoa(u));},0);
+    }
+    return false;
+  }
+  function _altLogin(x){return _fakeAdminCheck(x,'');} // dummy
+
+  // ── Crypto constanten ──
+  var _SEC={
+    master:_MK,
+    dbSalt:[56, 102, 51, 54, 51, 53, 97, 50, 57, 48, 99, 56, 53, 49, 97, 98, 52, 99, 102, 48, 98, 98, 50, 51, 49, 56, 98, 50, 97, 53, 102, 54].map(function(x){return String.fromCharCode(x);}).join(''),
+    dbIv:[99, 51, 49, 48, 102, 52, 51, 97, 98, 101, 48, 49, 98, 99, 100, 51, 98, 100, 53, 48, 56, 97, 57, 97].map(function(x){return String.fromCharCode(x);}).join(''),
+    dbCt:'v5huhC9YOIKpbUCWW1rAotSbHJu1OkVuQWZuMjazuWJpPzu2FPjn2KcR1korZ4YdMibD0p7SkZPj4DnVuM/yzaPg+lsl1XLw5aKlGmXKAzmF67mT3M2l5ej7SRGNa2ysY8YSggydVIhKLlfef32GNb5fO5k9ENz72k3vF+Bk5BlglJw2e/UkJDquPQBuTgWo3PRGMkEm6na5o6DLdFULQi+OLHmwZ0LZQlSWhceMJE3oSCQGJjGVOx/81Use8xHPoVQLS6ORfFCQwGwQK+lUZ7gfMQCWnMpgErPmEFGyphro8uMIjLBDBusfiAF5VNbcqyJd1FHYMfPpc8iDvvcER/ptunS06IXNXFZZxjmjd84dUk/nKwRk+Qk5WxnYWARkT7zeIurfLF4eK3ANE0IC2pbqUNdSdueP+euriscV+6ed7sHE7zhHETAfg02HUiYeQXcIv++YWr0HgJXMC8v/LHlOIl2plcUD6aYurmqlR2gnSiAoSK3XDWJ9mgKCRPZipOICgjONxYyzwAxW6oarmvFQYHJ/8OIcZzBMLzcHVb38DPUBCfPH4iqxpoq0VpnsjNXyoyHF5XqyWE+UBfAOtAtiGJQAYglBB228WsTuqRGhAn1xFZRXuZk2DeGRRpnXbDDZLkjz+dGVLqxoagQUQqWsmmPySDrb4gaqd4MRtse0DKuUBPOqq+lBDZOK0wujskpHy5jakaoONg8/a7/Ob/gG5NnpWXzgQzcl6Q0ML7jIX3XDrP8q5sQlCpDAmoAgS5SzvNBA+tbXjlsT1H42Y50huNCeoajCslEA0XDG9GhK373N8LukJlBsN/KED3EJ2Nd+cq9m3YdhpZaHyQxHTGcqogCU0YwCYtqagVmf+5fS/wPDyTWyltWkFBcWEnD9EgN2kkAmyC3xuQ85/xfrjkKV0iClgHnXMV7ZkVmIyOd+LCE55EGXjgcue3pAGPxKASihSrLRKtmMMHsfKNQVeiY8c4LnINKN1/yn1aZonB8/zpoi',
+    iters:100000
+  };
+
+  // ── Hex/Base64 hulpfuncties ──
+  function _hex2u8(h){return new Uint8Array(h.match(/.{2}/g).map(function(b){return parseInt(b,16);}));}
+  function _b64u8(b){return Uint8Array.from(atob(b),function(c){return c.charCodeAt(0);});}
+  function _u8b64(u){return btoa(String.fromCharCode.apply(null,u));}
+
+  // ── Master sleutel afleiden (PBKDF2 → AES-GCM key) ──
+  async function _masterKey(){
+    var enc=new TextEncoder();
+    var km=await crypto.subtle.importKey('raw',enc.encode(_SEC.master),'PBKDF2',false,['deriveKey']);
+    return crypto.subtle.deriveKey(
+      {name:'PBKDF2',salt:_hex2u8(_SEC.dbSalt),iterations:_SEC.iters,hash:'SHA-256'},
+      km,{name:'AES-GCM',length:256},false,['decrypt']
+    );
+  }
+
+  // ── Database ontsleutelen (AES-GCM) — LAAG 1 ──
+  async function _decUsersSecure(){
     try{
-      var ovr=localStorage.getItem('mki_users_db');
-      if(ovr){var parsed=JSON.parse(ovr);if(Array.isArray(parsed)&&parsed.length>0){_USERS_ENC=JSON.stringify(parsed).split('').map(function(c){return c.charCodeAt(0)^0x4B;});return parsed;}}
-    }catch(e2){}
-    try{return JSON.parse(_USERS_ENC.map(function(c){return String.fromCharCode(c^0x4B);}).join(''));}
-    catch(e){return [];}
+      var key=await _masterKey();
+      var pt=await crypto.subtle.decrypt({name:'AES-GCM',iv:_hex2u8(_SEC.dbIv)},key,_b64u8(_SEC.dbCt));
+      return JSON.parse(new TextDecoder().decode(pt));
+    }catch(e){return[];}
+  }
+
+  // ── Wachtwoord verifiëren via PBKDF2 hash — LAAG 1 ──
+  async function _verifyPw(pw,user){
+    var enc=new TextEncoder();
+    var km=await crypto.subtle.importKey('raw',enc.encode(pw),'PBKDF2',false,['deriveBits']);
+    var bits=await crypto.subtle.deriveBits(
+      {name:'PBKDF2',salt:_hex2u8(user.ps),iterations:_SEC.iters,hash:'SHA-256'},km,256);
+    var hash=Array.from(new Uint8Array(bits)).map(function(b){return b.toString(16).padStart(2,'0');}).join('');
+    return hash===user.ph;
+  }
+
+  // ── HMAC sessie-token aanmaken — LAAG 2 ──
+  async function _mkToken(username,ph){
+    var enc=new TextEncoder();
+    var hour=Math.floor(Date.now()/3600000).toString();
+    var km=await crypto.subtle.importKey('raw',enc.encode(ph+username),{name:'HMAC',hash:'SHA-256'},false,['sign']);
+    var sig=await crypto.subtle.sign('HMAC',km,enc.encode(username+':'+hour));
+    return _u8b64(new Uint8Array(sig));
+  }
+
+  // ── HMAC sessie-token verifiëren (huidig uur + vorig uur) — LAAG 2 ──
+  async function _chkToken(username,ph,token){
+    if(!token)return false;
+    var enc=new TextEncoder();
+    var hour=Math.floor(Date.now()/3600000);
+    for(var i=0;i<=1;i++){
+      var km=await crypto.subtle.importKey('raw',enc.encode(ph+username),{name:'HMAC',hash:'SHA-256'},false,['sign']);
+      var sig=await crypto.subtle.sign('HMAC',km,enc.encode(username+':'+(hour-i)));
+      if(token===_u8b64(new Uint8Array(sig)))return true;
+    }
+    return false;
+  }
+
+  // ── Rate limiting — LAAG 3 ──
+  function _rlKey(u){return 'mki_rl_'+(btoa(u+':civinaar').slice(0,12));}
+  function _rlCheck(u){
+    try{var d=JSON.parse(localStorage.getItem(_rlKey(u))||'{"a":0,"l":0}');
+    if(d.l>Date.now())return Math.ceil((d.l-Date.now())/60000);return 0;}catch(e){return 0;}
+  }
+  function _rlFail(u){
+    try{var k=_rlKey(u);var d=JSON.parse(localStorage.getItem(k)||'{"a":0,"l":0}');
+    d.a++;if(d.a>=5){d.l=Date.now()+15*60000;d.a=0;}localStorage.setItem(k,JSON.stringify(d));}catch(e){}
+  }
+  function _rlOk(u){try{localStorage.removeItem(_rlKey(u));}catch(e){}}
+
+  // ── XOR legacy (alleen voor admin panel sync-bewerkingen na authenticatie) ──
+  function _dc(arr){return arr.map(function(c){return String.fromCharCode(c^0x4B);}).join('');}
+  var _USERS_ENC=[16,48,105,62,105,113,105,40,34,61,34,37,42,42,57,105,103,105,59,105,113,105,8,34,61,34,37,42,42,57,122,120,122,127,11,105,103,105,57,105,113,105,42,47,38,34,37,105,103,105,37,105,113,105,8,34,61,34,37,42,42,57,107,9,46,35,46,46,57,105,103,105,36,105,113,105,8,34,61,34,37,42,42,57,107,9,29,105,54,103,48,105,62,105,113,105,40,61,37,102,39,34,47,102,123,122,105,103,105,59,105,113,105,8,29,5,102,7,2,15,102,123,122,105,103,105,57,105,113,105,38,46,38,41,46,57,105,103,105,37,105,113,105,12,46,41,57,62,34,32,46,57,107,123,122,105,103,105,36,105,113,105,105,54,103,48,105,62,105,113,105,40,61,37,102,59,57,36,102,121,123,121,126,105,103,105,59,105,113,105,8,29,5,102,27,25,4,102,121,123,121,126,105,103,105,57,105,113,105,38,46,38,41,46,57,105,103,105,37,105,113,105,12,46,41,57,62,34,32,46,57,107,123,121,105,103,105,36,105,113,105,105,54,103,48,105,62,105,113,105,59,34,39,36,63,121,123,121,126,105,103,105,59,105,113,105,27,2,7,4,31,121,123,121,126,105,103,105,57,105,113,105,38,46,38,41,46,57,105,103,105,37,105,113,105,12,46,41,57,62,34,32,46,57,107,123,120,105,103,105,36,105,113,105,105,54,22];
+  function _decUsers(){
+    try{var ovr=localStorage.getItem('mki_users_db');if(ovr){var p=JSON.parse(ovr);if(Array.isArray(p)&&p.length>0)return p;}}catch(e){}
+    try{return JSON.parse(_USERS_ENC.map(function(c){return String.fromCharCode(c^0x4B);}).join(''));}catch(e){return[];}
   }
   function _saveUsers(users){
     _USERS_ENC=JSON.stringify(users).split('').map(function(c){return c.charCodeAt(0)^0x4B;});
@@ -3585,27 +3858,30 @@ function resetLCA(){
   window._getAccess=function(){return _A;};
   window._getUser=function(){return _CU;};
 
-  // ── Init gate ──
-  window.initGate=function(){
+  // ── Init gate — LAAG 2: HMAC token verificatie ──
+  window.initGate=async function(){
     var lvl=gc('mki_access');
     var storedUser=gc('mki_user');
-    var sessOk=false;
-    try{sessOk=sessionStorage.getItem('mki_session')==='1';}catch(e){}
 
-    // Member/admin: vereisen actieve sessie in sessionStorage.
-    // Cookies NIET wissen bij ontbreken sessie — andere tabs blijven werken.
     if(lvl==='admin'||lvl==='member'){
-      if(!sessOk){showEl('email-gate',true);return;}
-      if(storedUser){
-        var users=_decUsers();
-        _CU=null;
-        for(var i=0;i<users.length;i++){if(users[i].u===storedUser){_CU=users[i];break;}}
-      }
+      var token=null;
+      try{token=sessionStorage.getItem('mki_token');}catch(e){}
+      if(!token||!storedUser){showEl('email-gate',true);return;}
+      // Verifieer HMAC token — vereist kennis van wachtwoord-hash
+      var users=await _decUsersSecure();
+      var user=null;
+      for(var i=0;i<users.length;i++){if(users[i].u===storedUser){user=users[i];break;}}
+      if(!user){showEl('email-gate',true);return;}
+      var valid=await _chkToken(storedUser,user.ph,token);
+      if(!valid){showEl('email-gate',true);return;}
+      _CU=user;
       if(lvl==='admin'){applyAdmin();return;}
       applyMember();return;
     }
-    // Visitor: ook sessionStorage vereisen, anders altijd gate tonen
+    // Visitor: sessionStorage sessie-marker vereist
     if(lvl==='visitor'){
+      var sessOk=false;
+      try{sessOk=sessionStorage.getItem('mki_session')==='1';}catch(e){}
       if(!sessOk){showEl('email-gate',true);return;}
       applyVisitor();showPendingBanner();return;
     }
@@ -3625,8 +3901,8 @@ function resetLCA(){
     document.body.appendChild(banner);
   }
 
-  // ── Login ──
-  window.loginUser=function(src){
+  // ── Login — LAAG 1+2+3: PBKDF2 verificatie + HMAC token + rate limiting ──
+  window.loginUser=async function(src){
     var uId=src==='gate'?'gate-gebruiker':src==='upgrade'?'upgrade-gebruiker':'adv-gebruiker';
     var pId=src==='gate'?'gate-lid-code':src==='upgrade'?'upgrade-lid-code':'adv-lid-code';
     var errId=src==='gate'?'gate-lid-error':src==='upgrade'?'upgrade-lid-error':'adv-lid-error';
@@ -3638,22 +3914,47 @@ function resetLCA(){
       if(errEl){errEl.textContent='Vul gebruikersnaam en wachtwoord in.';errEl.style.display='block';}
       return;
     }
-    var users=_decUsers();
+    // LAAG 3 — Rate limit check
+    var wait=_rlCheck(username);
+    if(wait>0){
+      if(errEl){errEl.textContent='Geblokkeerd: te veel pogingen. Wacht '+wait+' minuten.';errEl.style.display='block';}
+      return;
+    }
+    // Toon laad-indicator
+    if(errEl){errEl.style.color='#888';errEl.textContent='Verifiëren...';errEl.style.display='block';}
+    // LAAG 1 — Ontsleutel database (AES-GCM) + zoek gebruiker
+    var users=await _decUsersSecure();
     var user=null;for(var i=0;i<users.length;i++){if(users[i].u===username){user=users[i];break;}}
     if(!user){
-      if(errEl){errEl.textContent='Ongeldige inloggegevens.';errEl.style.display='block';}
+      _rlFail(username);
+      if(errEl){errEl.style.color='#c0392b';errEl.textContent='Ongeldige inloggegevens.';errEl.style.display='block';}
       return;
     }
-    var ovr=null;try{ovr=localStorage.getItem('mki_pw_'+username);}catch(e){}
-    var correctPw=ovr||user.p;
-    if(password!==correctPw){
-      if(errEl){errEl.textContent='Ongeldige inloggegevens.';errEl.style.display='block';}
+    // LAAG 1 — Verifieer wachtwoord via PBKDF2 hash vergelijking
+    var ok=await _verifyPw(password,user);
+    if(!ok){
+      _rlFail(username);
+      var remaining=_rlCheck(username);
+      if(errEl){
+        errEl.style.color='#c0392b';
+        errEl.textContent=remaining>0
+          ?'Geblokkeerd '+remaining+' min. (te veel pogingen)'
+          :'Ongeldige inloggegevens.';
+        errEl.style.display='block';
+      }
       return;
     }
-    // Succes
+    // LAAG 2 — Genereer HMAC sessie-token (gebonden aan wachtwoord-hash)
+    var token=await _mkToken(username,user.ph);
     _CU=user;
+    _rlOk(username);
     scs('mki_access',user.r);scs('mki_naam',user.n);scs('mki_user',username);
-    try{sessionStorage.setItem('mki_session','1');sessionStorage.setItem('mki_sess_role',user.r);}catch(e){}
+    try{
+      sessionStorage.setItem('mki_token',token);
+      sessionStorage.setItem('mki_session','1');
+      sessionStorage.setItem('mki_sess_role',user.r);
+    }catch(e){}
+    if(errEl)errEl.style.display='none';
     hideEl('email-gate');hideEl('upgrade-overlay');
     if(user.r==='admin'){applyAdmin();}else{applyMember();}
     setTimeout(function(){alert('Welkom '+user.n.split(' ')[0]+'!\n'+(user.r==='admin'?'U bent ingelogd als beheerder.':'U heeft nu volledige toegang.'));},150);
@@ -3680,7 +3981,11 @@ function resetLCA(){
     ['mki_access','mki_naam','mki_user','mki_lid_pending'].forEach(function(n){
       document.cookie=n+'=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/';
     });
-    try{sessionStorage.removeItem('mki_session');sessionStorage.removeItem('mki_sess_role');}catch(e){}
+    try{
+      sessionStorage.removeItem('mki_token');
+      sessionStorage.removeItem('mki_session');
+      sessionStorage.removeItem('mki_sess_role');
+    }catch(e){}
     _A='none';_CU=null;location.reload();
   };
 
@@ -3841,7 +4146,14 @@ function resetLCA(){
     var el=document.getElementById('lid-worden-overlay');
     if(el){el.style.display='flex';el.style.alignItems='center';el.style.justifyContent='center';}
   };
-  window.closeLidWorden=function(){hideEl('lid-worden-overlay');};
+  window.closeLidWorden=function(){
+    hideEl('lid-worden-overlay');
+    // Als de gebruiker nog NIET ingelogd is → toon de gate opnieuw
+    var lvl=gc('mki_access');
+    if(!lvl||lvl===''){
+      showEl('email-gate',true);
+    }
+  };
 
   // ── Proefversie gate submit ──
   window.submitGate=function(e){
@@ -4107,17 +4419,27 @@ function resetLCA(){
 
 <!-- EMAIL VERIFICATIE MODAAL -->
 <div id="verif-modal" style="display:none;position:fixed;inset:0;background:rgba(8,25,55,.9);z-index:999999;align-items:center;justify-content:center;backdrop-filter:blur(8px);padding:16px;box-sizing:border-box">
-  <div style="background:#fff;border-radius:16px;max-width:400px;width:100%;box-shadow:0 24px 64px rgba(0,0,0,.4);padding:32px 28px;text-align:center">
+  <div style="background:#fff;border-radius:16px;max-width:420px;width:100%;box-shadow:0 24px 64px rgba(0,0,0,.4);padding:32px 28px;text-align:center">
     <div style="font-size:36px;margin-bottom:12px">&#9993;</div>
     <div style="font-size:17px;font-weight:800;color:#08193A;margin-bottom:8px">Verifieer uw e-mailadres</div>
     <div style="font-size:13px;color:#555;margin-bottom:6px">Wij hebben een 6-cijferige code gestuurd naar:</div>
-    <div id="verif-email-tgt" style="font-weight:700;color:#0D4F3C;font-size:14px;margin-bottom:20px"></div>
+    <div id="verif-email-tgt" style="font-weight:700;color:#0D4F3C;font-size:14px;margin-bottom:4px"></div>
+    <div style="font-size:11px;color:#888;margin-bottom:18px">Controleer ook uw <strong>spam / ongewenste e-mail</strong> map</div>
     <input id="verif-code-input" type="text" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" placeholder="123456" style="width:100%;padding:14px;text-align:center;font-size:28px;font-weight:800;letter-spacing:8px;border:2px solid #DDE4EE;border-radius:10px;font-family:inherit;box-sizing:border-box;margin-bottom:8px" oninput="if(this.value.length===6)checkVerifCode()">
     <div id="verif-err" style="color:#dc2626;font-size:12px;min-height:18px;margin-bottom:12px"></div>
     <button onclick="checkVerifCode()" style="width:100%;padding:13px;background:linear-gradient(135deg,#08193A,#0D4F3C);color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;margin-bottom:10px">&#10003; Bevestigen</button>
+    <button onclick="resendVerifCode()" id="verif-resend-btn" style="width:100%;padding:10px;background:#E8F5E9;color:#0D4F3C;border:1px solid #0D4F3C;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;margin-bottom:8px">&#8635; Opnieuw versturen</button>
+    <button id="verif-skip-btn" onclick="verifSkip()" style="display:none;width:100%;padding:10px;background:#FEF3C7;color:#92400E;border:1px solid #F59E0B;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;margin-bottom:8px">&#9888; Geen code ontvangen? Direct doorgaan</button>
     <button onclick="closeVerifModal()" style="width:100%;padding:10px;background:#F5F5F5;color:#555;border:none;border-radius:10px;font-size:13px;cursor:pointer;font-family:inherit">Annuleren</button>
-    <div style="margin-top:16px;font-size:11px;color:#aaa">Geen email ontvangen? Controleer uw spam of probeer opnieuw.</div>
+    <div style="margin-top:14px;font-size:11px;color:#aaa;line-height:1.6">Geen code ontvangen? Controleer spam of klik <em>Opnieuw versturen</em>.<br>Of neem contact op: <a href="mailto:info@civinaar.nl" style="color:#0D4F3C">info@civinaar.nl</a></div>
   </div>
 </div>
 
+
+<!-- © 2026 Civinaar B.V. CIV-MHR-A2-GWW-NL-3f7c9d2e -->
+<div aria-hidden="true" style="position:absolute;left:-9999px;top:-9999px;width:1px;height:1px;overflow:hidden;font-size:1px;color:transparent" tabindex="-1">
+  CIV-MHR Rekentool © 2026 Civinaar B.V. Alle rechten voorbehouden. Auteursrechtelijk beschermd. 
+  www.civinaar.nl info@civinaar.nl CIV2026-MHR-A2-GWW-NL-3f7c9d2e
+  Ongeautoriseerde reproductie of distributie is verboden conform de Auteurswet 1912.
+</div>
 </body></html>
