@@ -459,5 +459,15 @@ footer{background:var(--navy);padding:56px 40px 32px}
   </div>
 </footer>
 
+<script>
+// Verberg nav en footer wanneer in iframe (embed-modus)
+if(window.self !== window.top){
+  var nav=document.querySelector('nav.nav');
+  if(nav)nav.style.display='none';
+  var footer=document.querySelector('footer');
+  if(footer)footer.style.display='none';
+  document.body.style.paddingTop='0';
+}
+</script>
 </body>
 </html>
