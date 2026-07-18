@@ -1966,7 +1966,7 @@ function submitAdvies(e){
   if(!ok)return;
   var btn=document.getElementById('adv-submit-btn')||document.querySelector('#advies-form button[type=submit]');
   if(btn){btn.textContent='Bezig...';btn.disabled=true;}
-  sendVerifCode(email,function(){doSubmitAdvies(naam,org,email,tel);if(btn){btn.textContent='Versturen';btn.disabled=false;}});
+  doSubmitAdvies(naam,org,email,tel);if(btn){btn.textContent='Versturen';btn.disabled=false;}
   return;
 }
 function doSubmitAdvies(naam,org,email,tel){
@@ -4148,11 +4148,13 @@ function resetLCA(){
   };
   window.closeLidWorden=function(){
     hideEl('lid-worden-overlay');
-    // Als de gebruiker nog NIET ingelogd is → toon de gate opnieuw
+    // Alleen toestaan als member/admin ÓFTE geldige visitor-sessie
     var lvl=gc('mki_access');
-    if(!lvl||lvl===''){
-      showEl('email-gate',true);
-    }
+    var sessOk=false;
+    try{sessOk=sessionStorage.getItem('mki_session')==='1';}catch(e){}
+    if(lvl==='member'||lvl==='admin'){return;} // ingelogd: OK
+    if(lvl==='visitor'&&sessOk){return;}       // geldige proefversie-sessie: OK
+    showEl('email-gate',true);                 // anders: gate terug
   };
 
   // ── Proefversie gate submit ──
@@ -4170,6 +4172,7 @@ function resetLCA(){
       alert('Vul een geldig e-mailadres in.');return;
     }
     var btn=document.getElementById('gate-btn');btn.textContent='Verifiëren...';btn.disabled=true;
+    // Stuur admin-notificatie naar info@civinaar.nl
     if(typeof emailjs!=='undefined'&&typeof EMAILJS_CONFIGURED!=='undefined'&&EMAILJS_CONFIGURED){
       emailjs.send(EMAILJS_SERVICE_ID,EMAILJS_TEMPLATE_ID,{
         naam:naam,email:email,org:org||'--',datum:new Date().toLocaleDateString('nl-NL'),
@@ -4178,12 +4181,13 @@ function resetLCA(){
         to_email:'info@civinaar.nl',tel:'--'
       }).catch(function(){});
     }
-    // Proefversie: stuur verificatiecode naar bezoeker
+    // Verificatiecode sturen naar bezoeker
     sendVerifCode(email,function(){
       sc('mki_access','visitor',365);sc('mki_naam',naam,365);
       try{sessionStorage.setItem('mki_session','1');}catch(e){}
       hideEl('email-gate');applyVisitor();
     });
+    btn.textContent='Proef starten';btn.disabled=false;
   };
 
   // ── Lidmaatschap aanvragen ──
@@ -4216,8 +4220,8 @@ function resetLCA(){
     }
     var errDiv2=document.getElementById('lid-form-errors');if(errDiv2)errDiv2.remove();
     ['lid-naam','lid-org','lid-email','lid-tel'].forEach(function(id){var el=document.getElementById(id);if(el)el.style.border='';});
-    btn.textContent='Verifiëren...';btn.disabled=true;
-    sendVerifCode(email,function(){doSubmitLidWorden(naam,org,email,tel,opm,btn);});
+    btn.textContent='Versturen...';btn.disabled=true;
+    doSubmitLidWorden(naam,org,email,tel,opm,btn);
   };
 
   function doSubmitLidWorden(naam,org,email,tel,opm,btn){
