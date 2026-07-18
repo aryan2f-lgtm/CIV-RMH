@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>CIV-MHR MKI Rekentool — Civinaar</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Inter',system-ui,sans-serif;background:#fff;overflow-x:hidden}
+a{text-decoration:none}
+/* HERO */
+.hero{background:linear-gradient(135deg,#08193A 0%,#0D4F3C 55%,#064E3B 100%);padding:44px 40px 36px}
+.hero-inner{max-width:1100px;margin:0 auto;display:grid;grid-template-columns:1fr 380px;gap:40px;align-items:center}
+.badge{display:inline-flex;align-items:center;gap:6px;background:rgba(34,197,94,.15);border:1px solid rgba(34,197,94,.3);color:#86EFAC;padding:5px 14px;border-radius:100px;font-size:11px;font-weight:700;letter-spacing:.5px;margin-bottom:16px}
+h1{font-size:clamp(24px,3.2vw,42px);font-weight:900;color:#fff;line-height:1.15;margin-bottom:12px;letter-spacing:-.5px}
+h1 em{color:#6EE7A0;font-style:normal}
+.sub{font-size:14px;color:rgba(255,255,255,.65);line-height:1.6;max-width:420px;margin-bottom:20px}
+.btns{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:22px}
+.btn-green{display:inline-flex;align-items:center;gap:8px;background:#16A34A;color:#fff;padding:12px 22px;border-radius:10px;font-size:14px;font-weight:700;box-shadow:0 4px 16px rgba(22,163,74,.4)}
+.btn-outline{display:inline-flex;align-items:center;gap:8px;background:rgba(255,255,255,.1);color:#fff;padding:12px 18px;border-radius:10px;font-size:14px;font-weight:600;border:1.5px solid rgba(255,255,255,.25)}
+.stats{display:flex;gap:24px;flex-wrap:wrap}
+.stat-val{font-size:20px;font-weight:900;color:#fff}
+.stat-lbl{font-size:11px;color:rgba(255,255,255,.45);margin-top:1px}
+/* LIVE CARD */
+.livecard{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);border-radius:16px;padding:18px}
+.lc-head{font-size:10px;font-weight:700;color:rgba(255,255,255,.4);letter-spacing:.8px;text-transform:uppercase;margin-bottom:12px;display:flex;align-items:center;gap:6px}
+.lc-dot{width:7px;height:7px;background:#6EE7A0;border-radius:50%;display:inline-block}
+.lc-row{display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid rgba(255,255,255,.07)}
+.lc-mat{font-size:13px;font-weight:600;color:#fff}
+.lc-cat{font-size:11px;color:rgba(255,255,255,.4);margin-top:1px}
+.rf2{background:rgba(99,102,241,.25);color:#A5B4FC;font-size:11px;font-weight:700;padding:3px 10px;border-radius:6px}
+.rf3{background:rgba(245,158,11,.2);color:#FCD34D;font-size:11px;font-weight:700;padding:3px 10px;border-radius:6px}
+.lc-result{background:rgba(110,231,160,.08);border:1px solid rgba(110,231,160,.2);border-radius:10px;padding:12px 14px;margin-top:12px;display:flex;justify-content:space-between;align-items:center}
+.lc-res-lbl{font-size:10px;font-weight:700;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px}
+.lc-res-val{font-size:24px;font-weight:900;color:#6EE7A0}
+.lc-res-sub{font-size:11px;color:rgba(255,255,255,.4);margin-top:2px}
+/* STAPPEN */
+.stappen{background:#fff;padding:32px 40px}
+.stappen-inner{max-width:1100px;margin:0 auto}
+.sec-tag{display:inline-flex;align-items:center;gap:6px;background:#F0FDF4;border:1px solid #BBF7D0;color:#16A34A;padding:4px 14px;border-radius:100px;font-size:11px;font-weight:700;letter-spacing:.5px;margin-bottom:10px}
+.sec-title{font-size:20px;font-weight:800;color:#111827;margin-bottom:20px}
+.steps{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.step{background:#F8FAFC;border:1px solid #E5E7EB;border-radius:12px;padding:16px 14px}
+.step-num{width:26px;height:26px;background:#08193A;color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;margin-bottom:8px}
+.step-ico{font-size:20px;margin-bottom:8px}
+.step h3{font-size:13px;font-weight:700;color:#111827;margin-bottom:5px}
+.step p{font-size:11.5px;color:#6B7280;line-height:1.5}
+/* TOEGANG */
+.toegang{background:linear-gradient(135deg,#08193A 0%,#0D4F3C 100%);padding:28px 40px}
+.toegang-inner{max-width:1100px;margin:0 auto;display:grid;grid-template-columns:1fr auto;gap:32px;align-items:center}
+.tbadge{display:inline-flex;align-items:center;gap:6px;background:rgba(34,197,94,.12);border:1px solid rgba(34,197,94,.3);color:#86EFAC;padding:4px 14px;border-radius:100px;font-size:11px;font-weight:700;letter-spacing:.5px;margin-bottom:10px}
+.ttitle{font-size:22px;font-weight:900;color:#fff;margin-bottom:7px}
+.ttitle span{color:#6EE7A0}
+.tsub{font-size:13px;color:rgba(255,255,255,.6);line-height:1.6;max-width:380px}
+.tbtns{display:flex;flex-direction:column;gap:10px;flex-shrink:0}
+.tbtn1{display:inline-flex;align-items:center;justify-content:center;gap:8px;background:#16A34A;color:#fff;padding:13px 26px;border-radius:10px;font-size:14px;font-weight:700;white-space:nowrap;box-shadow:0 4px 16px rgba(22,163,74,.35)}
+.tbtn2{display:inline-flex;align-items:center;justify-content:center;gap:8px;background:rgba(255,255,255,.1);color:#fff;padding:13px 26px;border-radius:10px;font-size:14px;font-weight:600;border:1.5px solid rgba(255,255,255,.2);white-space:nowrap}
+@media(max-width:700px){
+  .hero-inner,.toegang-inner{grid-template-columns:1fr}
+  .livecard{display:none}
+  .steps{grid-template-columns:repeat(2,1fr)}
+  .tbtns{flex-direction:row;flex-wrap:wrap}
+  .hero,.stappen,.toegang{padding-left:20px;padding-right:20px}
+}
+</style>
+</head>
+<body>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-inner">
+    <div>
+      <div class="badge">✓ NMD SET A2 &nbsp;·&nbsp; CIV-MHR &nbsp;·&nbsp; ECOINVENT 3.9.1</div>
+      <h1>MKI berekening voor<br><em>hergebruikte materialen</em><br>in minuten</h1>
+      <p class="sub">De professionele tool voor gemeenten, aannemers en GWW-projectleiders. Conform CB'23 Leidraad Hergebruik — resultaten direct toepasbaar in aanbestedingen.</p>
+      <div class="btns">
+        <a href="rekentool.html" class="btn-green">⚡ Start gratis proefversie</a>
+        <a href="#stappen" class="btn-outline">Hoe het werkt →</a>
+      </div>
+      <div class="stats">
+        <div><div class="stat-val">285+</div><div class="stat-lbl">Materialen</div></div>
+        <div><div class="stat-val">RF1–RF4</div><div class="stat-lbl">Hergebruikklassen</div></div>
+        <div><div class="stat-val">5 min</div><div class="stat-lbl">Eerste resultaat</div></div>
+        <div><div class="stat-val">100%</div><div class="stat-lbl">Browsergebaseerd</div></div>
+      </div>
+    </div>
+    <div class="livecard">
+      <div class="lc-head"><span class="lc-dot"></span>Live voorbeeld — Beton RF2 · 500 m³ · 70% hergebruik</div>
+      <div class="lc-row"><div><div class="lc-mat">Beton C20/25 (gebroken)</div><div class="lc-cat">Constructiebeton</div></div><span class="rf2">RF2</span></div>
+      <div class="lc-row"><div><div class="lc-mat">Asfalt STAB (frees)</div><div class="lc-cat">Asfalt &amp; funderingen</div></div><span class="rf3">RF3</span></div>
+      <div class="lc-row" style="border-bottom:none"><div><div class="lc-mat">Staal constructief (gerecycled)</div><div class="lc-cat">Staal &amp; metalen</div></div><span class="rf2">RF2</span></div>
+      <div class="lc-result">
+        <div><div class="lc-res-lbl">MKI Besparing</div><div class="lc-res-val">€ 7.625</div><div class="lc-res-sub">↓ 61% t.o.v. primaire materialen</div></div>
+        <div style="font-size:26px;color:#6EE7A0;opacity:.6">↓</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 4 STAPPEN -->
+<section class="stappen" id="stappen">
+  <div class="stappen-inner">
+    <div style="text-align:center;margin-bottom:20px">
+      <div class="sec-tag">📋 WERKWIJZE</div>
+      <div class="sec-title">Van projectinvoer naar aanbestedingsrapport</div>
+    </div>
+    <div class="steps">
+      <div class="step"><div class="step-num">1</div><div class="step-ico">📋</div><h3>Toegang aanvragen</h3><p>Vul naam en e-mail in. U ontvangt een verificatiecode en start direct — gratis, zonder account.</p></div>
+      <div class="step"><div class="step-num">2</div><div class="step-ico">🔍</div><h3>Materialen selecteren</h3><p>Zoek en filter uit 285+ materialen: asfalt, beton, staal, groen en meer — per categorie of naam.</p></div>
+      <div class="step"><div class="step-num">3</div><div class="step-ico">⚙️</div><h3>Klasse &amp; hoeveelheid</h3><p>Kies hergebruikklasse RF1–RF4 en percentage hergebruik. RF_eff wordt automatisch berekend.</p></div>
+      <div class="step"><div class="step-num">4</div><div class="step-ico">📄</div><h3>Rapport exporteren</h3><p>Download PDF-rapport met Civinaar-logo. Leden exporteren ook naar Excel en DuboCalc CSV.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- TOEGANG CTA -->
+<section class="toegang">
+  <div class="toegang-inner">
+    <div>
+      <div class="tbadge">💳 TOEGANG</div>
+      <div class="ttitle">Kies uw <span>toegangsniveau</span></div>
+      <p class="tsub">Start direct gratis met de proefversie, of vraag volledig lidmaatschap aan voor onbeperkte rapportage en export.</p>
+    </div>
+    <div class="tbtns">
+      <a href="rekentool.html" class="tbtn1">⚡ Start gratis proefversie</a>
+      <a href="rekentool.html" class="tbtn2">🏅 Lidmaatschap aanvragen</a>
+    </div>
+  </div>
+</section>
+
+<script>
+// Auto-hoogte naar parent sturen
+function _sendH(){var h=document.documentElement.scrollHeight;window.parent.postMessage({civH:h},'*');}
+window.addEventListener('load',function(){_sendH();setTimeout(_sendH,300);setTimeout(_sendH,1000);});
+window.addEventListener('resize',_sendH);
+</script>
+</body>
+</html>
